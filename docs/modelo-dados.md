@@ -21,6 +21,7 @@ erDiagram
     CLINIC ||--o{ MEMBERSHIP : recebe
     MEMBERSHIP ||--o{ ROLE_ASSIGNMENT : acumula
     MEMBERSHIP ||--o| PROFESSIONAL : representa
+    PHYSICIAN_IDENTITY ||--o{ PROFESSIONAL : unifica
     PROFESSIONAL ||--o{ AVAILABILITY : atende
     PROFESSIONAL ||--o{ BLOCK : bloqueia
 ```
@@ -31,7 +32,8 @@ erDiagram
 | USER | id, auth_subject, nome, situação, is_dev | Identidade global; credencial gerida pela solução de autenticação a escolher |
 | MEMBERSHIP | id, clinic_id, user_id, situação | Um vínculo por usuário e clínica; pode ser desativado |
 | ROLE_ASSIGNMENT | id, clinic_id, membership_id, função, escopo | Funções: administrador, médico e recepção; escopo próprio ou clínica conforme regras |
-| PROFESSIONAL | id, clinic_id, membership_id, duração_padrão, situação | Vínculo médico; duração em 15, 30, 45 ou 60 minutos |
+| PHYSICIAN_IDENTITY | id, user_id, situação | Identidade global mínima do médico para verificar ocupação sem compartilhar pacientes; representação técnica proposta |
+| PROFESSIONAL | id, clinic_id, membership_id, physician_identity_id, duração_padrão, situação | Vínculo médico; duração em 15, 30, 45 ou 60 minutos |
 | AVAILABILITY | id, clinic_id, professional_id, dia_semana, início_local, fim_local, vigência | Representa períodos de atendimento; detalhes de recorrência da disponibilidade a validar |
 | BLOCK | id, clinic_id, professional_id, início, fim, categoria, created_by | Bloqueio manual; evitar motivo com dados sensíveis desnecessários |
 
@@ -39,7 +41,9 @@ Dev é capacidade da plataforma, não função concedida por administrador de cl
 
 Médico com recepção continua limitado ao próprio profissional. A combinação de funções não pode ser tratada como união automática de acesso irrestrito. Administrador tem acesso à própria clínica. Somente administrador pode exportar dados; Dev não ganha exportação implicitamente.
 
-Uma identidade USER pode ter vários vínculos, mas PROFESSIONAL é local à clínica. Prevenção de agendamento simultâneo do mesmo médico entre clínicas exige decisão adicional sem expor dados de uma clínica à outra; não presumir disponibilidade livre por falta de visibilidade.
+Uma identidade USER pode ter vários vínculos, mas PROFESSIONAL é local à clínica. É obrigatório impedir sobreposição do mesmo médico entre clínicas. Proposta: PHYSICIAN_IDENTITY liga os registros locais a uma identidade única e verificada. Não identificar o médico apenas pelo nome nem permitir contas duplicadas contornarem o controle; deduplicação e validação dessa identidade precisam de desenho técnico.
+
+A verificação global ocorre no servidor e retorna somente disponibilidade ou conflito, sem expor clínica de origem, paciente ou identificador de consulta de outra clínica. RLS e consultas comuns continuam isoladas; a rotina de ocupação global tem privilégio mínimo, sem conceder leitura global às recepções. O Dev continua usando clínica selecionada.
 
 ## 3. Pacientes, responsáveis e consultas
 
@@ -73,12 +77,12 @@ erDiagram
 | CONFIRMATION | id, clinic_id, appointment_id, versão, origem, confirmed_at, invalidated_at | Confirmação válida apenas para a versão atual; reagendamento exige nova |
 | CANCELLATION_REQUEST | id, clinic_id, appointment_id, versão, requested_at, resultado, decided_at, decided_by | Registro separado; decisão pela recepção ou administrador dentro do escopo |
 | ACTION_TOKEN | id, clinic_id, appointment_id, versão, hash, finalidade, expires_at, consumed_at | Link seguro; guardar hash, não segredo em claro; limite e reuso dependem da ação |
-| WAITLIST_ENTRY | id, clinic_id, patient_id, professional_id opcional, entered_at, situação | Não definir prioridade por ordem de entrada sem esclarecer ordem de contato |
-| WAITLIST_CONTACT | id, clinic_id, waitlist_entry_id, contacted_at, resultado, actor_id | Registra contatos; algoritmo e reserva temporária pendentes |
+| WAITLIST_ENTRY | id, clinic_id, patient_id, professional_id opcional, entered_at, situação | Prioridade cronológica de quem fez o primeiro pedido, registrada em entered_at; desempate técnico a definir |
+| WAITLIST_CONTACT | id, clinic_id, waitlist_entry_id, contacted_at, resultado, actor_id | Registra contatos respeitando a ordem do primeiro pedido; elegibilidade e reserva temporária pendentes |
 
 APPOINTMENT.estado: agendada, confirmada, concluída, cancelada ou falta. Não criar estado de consulta para conflito Google ou solicitação de cancelamento.
 
-Substituição deve relacionar consulta anterior e nova no histórico, preservar o registro anterior e liberar ocupação de forma atômica. Estado/destino da consulta anterior ainda não definido: proposta de vínculo de substituição não escolhe automaticamente cancelamento ou reagendamento.
+Substituição deve relacionar consulta anterior e nova no histórico, preservar o registro anterior e liberar ocupação de forma atômica. A consulta anterior passa a cancelada. Cancelamento anterior, nova consulta e tarefas são gravados na mesma transação; invalidar lembretes e confirmação/ações antigas e solicitar remoção do evento anterior. Comunicação ao paciente continua pendente. A substituição só alcança consulta da clínica e do escopo autorizado, nunca consulta de outra clínica.
 
 ### Regras de tempo
 
@@ -90,9 +94,11 @@ Substituição deve relacionar consulta anterior e nova no histórico, preservar
 
 ### Integridade da ocupação
 
-Proposta: restrição no banco para impedir intervalos ativos sobrepostos por profissional, combinada a transação e bloqueio adequados para substituição e bloqueios. Validar disponibilidade e bloqueios na mesma operação protegida contra concorrência.
+Regra aprovada: agendada e confirmada reservam o horário. Concluída, cancelada e falta não reservam. Solicitação de cancelamento pendente e conflito Google não liberam ocupação enquanto a consulta permanece agendada ou confirmada.
 
-A escolha exata de quais estados ocupam agenda e das transições detalhadas precisa ser validada. Não implementar filtros de conflito baseados em suposições sobre concluída ou falta.
+Proposta técnica: manter um registro mínimo de ocupação global por PHYSICIAN_IDENTITY e intervalo, atualizado atomicamente com a consulta. Uma restrição no banco impede sobreposição dos registros ativos em qualquer clínica, inclusive sob concorrência. Não depender de apenas verificar e depois inserir. O registro global não contém paciente, dados clínicos ou conteúdo de eventos e não é legível por usuários comuns.
+
+Validar disponibilidade e bloqueios na mesma operação protegida. Reagendamento, substituição, cancelamento e mudanças de estado atualizam ocupação na mesma transação. Transições detalhadas continuam pendentes. O desenho físico dessa projeção de ocupação e suas permissões será definido antes das migrações.
 
 ## 4. Comunicação e Google
 
@@ -168,6 +174,7 @@ Administrador lê somente eventos da própria clínica. Dev acessa contexto sele
 10. event_id único no contexto do calendário/conexão, com preservação de registros necessários à remoção.
 11. Índices orientados a agenda por clínica/profissional/data, tarefas pendentes por prazo, histórico e auditoria por clínica.
 12. Políticas de acesso no banco e servidor; processos ampliados exigem contexto explícito.
+13. Ocupação global única por médico/intervalo para agendada e confirmada, sem leitura de dados de outras clínicas por usuários comuns.
 
 Essas restrições são especificação proposta, não SQL validado.
 
@@ -185,9 +192,9 @@ Essas restrições são especificação proposta, não SQL validado.
 
 | Tema | Validar antes da implementação |
 |---|---|
-| Ocupação | Estados que reservam horário e conflitos do mesmo médico entre clínicas |
-| Substituição | Destino da consulta anterior e comunicação ao paciente |
-| Lista de espera | Significado de ordem de contato, prioridade e reserva |
+| Ocupação | Desenho técnico da identidade única e restrição global; estados agendada e confirmada já definidos |
+| Substituição | Comunicação ao paciente; consulta anterior é cancelada |
+| Lista de espera | Elegibilidade, desempate e reserva; prioridade pelo primeiro pedido aprovada |
 | Reagendamento | Referência de tempo para elegibilidade do novo lembrete |
 | Duração | Efeito de mudança do padrão |
 | Google | Quantidade de calendários, compartilhamento de conexão e autenticação |

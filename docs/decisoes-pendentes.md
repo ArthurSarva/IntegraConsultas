@@ -14,7 +14,10 @@ Aplicação web; agenda própria; suporte a clínicas isoladas; funções por v�
 - Duração específica restrita a 15, 30, 45 ou 60 minutos.
 - Recepção e administrador aprovam cancelamentos, substituem consultas e registram conclusão ou falta.
 - Reagendamento exige nova confirmação.
-- Lista de espera segue ordem de contato, cujo significado operacional está pendente.
+- Lista de espera segue ordem cronológica do primeiro pedido.
+- Agendada e confirmada ocupam horário; concluída, cancelada e falta não ocupam.
+- Impedir sobreposição do mesmo médico entre clínicas sem revelar dados de outra clínica.
+- Substituição cancela a consulta anterior e preserva histórico.
 - Um lembrete às 8h da véspera; não enviar para agendamentos com menos de 24 horas nem após perda desse horário.
 - Conflito revelado pelo Google exige novo horário, preservando a consulta e sinalizando conflito.
 - Recepção e administrador editam pacientes, consultam informações e bloqueiam horários; somente administrador exporta.
@@ -30,8 +33,8 @@ Aplicação web; agenda própria; suporte a clínicas isoladas; funções por v�
 | Agenda | Transições detalhadas e solicitações após a consulta; recepção e administrador são os aprovadores |
 | Duração | Efeito de alterações no padrão; qualquer duração fica restrita a 15, 30, 45 ou 60 minutos |
 | Autoagendamento | Versão futura: identificação, horários disponíveis, antecedência, limites e regras; fora da implementação inicial |
-| Encaixes | Destino e comunicação da consulta substituída; recepção e administrador autorizados |
-| Lista de espera | Esclarecer ordem de contato, elegibilidade, forma de contato e reserva temporária |
+| Encaixes | Comunicação da consulta substituída; destino cancelada e perfis já definidos |
+| Lista de espera | Elegibilidade, desempate, forma de contato e reserva temporária; prioridade pelo primeiro pedido |
 | Recorrência | Incluir ou não consultas recorrentes |
 | Lembretes | Repetição após falhas, prazo de processamento e efeitos da confirmação; regra das 8h da véspera já definida |
 | Acesso | Matriz detalhada por função; médico com recepção limitado à própria agenda |

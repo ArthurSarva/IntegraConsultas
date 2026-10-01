@@ -30,19 +30,19 @@ Status: requisitos acordados, salvo itens explicitamente marcados como propostas
 - RF-11: Cadastrar pacientes, profissionais, disponibilidade e bloqueios.
 - RF-12: Agendar, cancelar e reagendar consultas.
 - RF-13: Estados: agendada, confirmada, concluída, cancelada e falta.
-- RF-14: Duração padrão configurável por profissional por seleção de 15, 30, 45 ou 60 minutos. O profissional que realiza o agendamento pode escolher uma duração diferente para a consulta. Valores e limites dessas exceções ainda serão definidos.
+- RF-14: Duração padrão configurável por profissional por seleção de 15, 30, 45 ou 60 minutos. O profissional que realiza o agendamento pode escolher uma duração diferente para a consulta. A duração específica também deve ser uma das opções 15, 30, 45 ou 60 minutos.
 - RF-15: Impedir sobreposição para o mesmo profissional, inclusive em operações simultâneas.
-- RF-16: Manter lista de espera para aproveitar horários liberados.
-- RF-17: Permitir encaixes somente a usuários autorizados e em horários livres, sem sobreposição. Disponibilizar caixa de seleção para substituir uma consulta preexistente, preservando seu histórico e atualizando seus lembretes e evento no Google. Substituição não autoriza manter duas consultas ativas no mesmo intervalo. Permissões e tratamento operacional da consulta substituída ainda serão detalhados.
+- RF-16: Manter lista de espera para aproveitar horários liberados, seguindo ordem de contato. O significado operacional de ordem de contato ainda precisa ser esclarecido; não presumir ordem de entrada.
+- RF-17: Permitir encaixes somente a usuários autorizados e em horários livres, sem sobreposição. Disponibilizar caixa de seleção para substituir uma consulta preexistente, preservando seu histórico e atualizando seus lembretes e evento no Google. Substituição não autoriza manter duas consultas ativas no mesmo intervalo. Recepção e administrador podem substituir, respeitando o escopo. Estado final e notificação da consulta substituída ainda serão detalhados.
 - RF-18: Atender consultas presenciais e online, com endereço ou link correspondente.
 - RF-19: Não incluir controle de salas e equipamentos no escopo inicial.
-- RF-20: Paciente pode confirmar presença ou solicitar cancelamento pelo WhatsApp ou por link. Cancelar automaticamente quando a data da solicitação for anterior à véspera da consulta, considerando o fuso horário da clínica. Na véspera ou no dia da consulta, exigir aprovação. Exemplo: consulta na quinta-feira pode ser cancelada automaticamente até terça-feira; na quarta ou quinta, depende de aprovação. A solicitação pendente não cria um novo estado de consulta; fluxo, aprovadores e solicitações posteriores à consulta ainda serão definidos.
+- RF-20: Paciente pode confirmar presença ou solicitar cancelamento pelo WhatsApp ou por link. Cancelar automaticamente quando a data da solicitação for anterior à véspera da consulta, considerando o fuso horário da clínica. Na véspera ou no dia da consulta, exigir aprovação. Exemplo: consulta na quinta-feira pode ser cancelada automaticamente até terça-feira; na quarta ou quinta, depende de aprovação. A solicitação pendente não cria um novo estado de consulta; recepção e administrador aprovam dentro do escopo. Solicitações posteriores à consulta ainda serão definidas.
 - RF-21: Cadastrar responsáveis e definir destinatário das mensagens, inclusive em telefones compartilhados.
 
 ## WhatsApp
 
 - RF-22: Usar integração oficial e número a ser providenciado pela clínica.
-- RF-23: Configurar antecedência dos lembretes e horários permitidos de envio.
+- RF-23: Programar um lembrete às 8h da data anterior à consulta, no fuso da clínica. Consultas agendadas com menos de 24 horas de antecedência não recebem lembrete. Se o agendamento ocorrer após as 8h da véspera, não enviar lembrete tardio. Política de repetição após falha é pendente.
 - RF-24: Registrar autorização para mensagens e oferecer interrupção dos lembretes.
 - RF-25: Acompanhar programação, envio, entrega e falhas. Aceitação pelo fornecedor não equivale a entrega.
 - RF-26: Invalidar lembretes antigos em cancelamentos e reagendamentos.
@@ -57,7 +57,7 @@ Status: requisitos acordados, salvo itens explicitamente marcados como propostas
 - RF-32: Compromissos externos bloqueiam disponibilidade usando apenas informação de ocupado, sem importar detalhes pessoais.
 - RF-33: Exibir pendências e falhas, repetir sincronizações com segurança e evitar eventos duplicados.
 - RF-34: Configurar vínculo de agenda por profissional e clínica.
-- RF-37: Se o Google estiver indisponível, permitir agendamento com alerta de que a disponibilidade externa não foi verificada. Manter sincronização e atualização pendentes para nova tentativa após recuperação; não cancelar nem substituir automaticamente uma consulta diante de conflito externo.
+- RF-37: Se o Google estiver indisponível, permitir agendamento com alerta de que a disponibilidade externa não foi verificada. Manter sincronização e atualização pendentes para nova tentativa após recuperação; se a recuperação revelar conflito, preservar a consulta, sinalizar conflito e exigir escolha de outro horário, sem apagar ou cancelar automaticamente. Conflito é informação separada dos cinco estados da consulta.
 
 Proposta inicial: publicar consultas do IntegraConsultas no Google; alterações diretas em eventos do Google não modificam consultas. Consulta de disponibilidade externa é um fluxo separado. Publicar apenas título genérico, horário e link autenticado, sem identificação do paciente por padrão.
 
@@ -66,6 +66,13 @@ Proposta inicial: publicar consultas do IntegraConsultas no Google; alterações
 - RF-35: Consultas por período e profissional; confirmações, cancelamentos, faltas e falhas dos lembretes.
 - RF-36: Administrador acessa logs de acesso e ações somente da clínica vinculada.
 
+## Permissões operacionais complementares
+
+- RF-38: Recepção e administrador registram conclusão e falta, respeitando o escopo.
+- RF-39: Reagendamento exige nova confirmação do paciente; invalidar confirmação e ações antigas, mantendo histórico.
+- RF-40: Recepção e administrador podem editar cadastros de pacientes, consultar suas informações e bloquear horários de médicos, respeitando clínica e escopo próprio do médico com recepção.
+- RF-41: Somente administrador da clínica pode exportar dados. Acesso global do Dev não implica autorização de exportação.
+
 ## Pendências
 
-Consultas recorrentes, transições de estados, aprovadores de cancelamento, detalhes da substituição de consultas, limites de duração excepcional, elegibilidade da lista de espera, conflitos externos e acesso detalhado aos pacientes serão especificados antes da implementação correspondente. Autoagendamento fica para versão futura.
+Consultas recorrentes, transições detalhadas de estados, tratamento da consulta substituída, significado de ordem de contato, elegibilidade e reserva da lista de espera, política de repetição de lembretes e forma do link online serão especificados antes da implementação correspondente. Autoagendamento fica para versão futura.

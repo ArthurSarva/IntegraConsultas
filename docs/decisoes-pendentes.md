@@ -11,7 +11,14 @@ Aplicação web; agenda própria; suporte a clínicas isoladas; funções por v�
 - Médico com função de recepção gerencia somente a própria agenda.
 - Falha do Google permite agendamento com alerta e atualização pendente para recuperação posterior.
 - Autoagendamento adiado para versão futura.
-- Profissional que agenda pode escolher duração excepcional; limites pendentes.
+- Duração específica restrita a 15, 30, 45 ou 60 minutos.
+- Recepção e administrador aprovam cancelamentos, substituem consultas e registram conclusão ou falta.
+- Reagendamento exige nova confirmação.
+- Lista de espera segue ordem de contato, cujo significado operacional está pendente.
+- Um lembrete às 8h da véspera; não enviar para agendamentos com menos de 24 horas nem após perda desse horário.
+- Conflito revelado pelo Google exige novo horário, preservando a consulta e sinalizando conflito.
+- Recepção e administrador editam pacientes, consultam informações e bloqueiam horários; somente administrador exporta.
+- Infraestrutura gratuita, normas e metas de qualidade sugeridas ainda não foram aprovadas.
 
 ## Decisões necessárias
 
@@ -19,14 +26,14 @@ Aplicação web; agenda própria; suporte a clínicas isoladas; funções por v�
 |---|---|
 | Infraestrutura | Aprovar stack, hospedagem, orçamento e capacidade esperada |
 | WhatsApp | Número, fornecedor, configuração oficial, modelos, custos e política de autorização |
-| Google | Calendários por clínica, permissões, configuração OAuth, tratamento de conflitos após recuperação |
-| Agenda | Transições de estados, aprovadores de cancelamento e regras de alteração; cancelamento automático antes da véspera já definido |
-| Duração | Efeito de alterações no padrão e valores/limites de exceções escolhidas pelo profissional; padrão de 15, 30, 45 ou 60 minutos |
+| Google | Calendários por clínica, permissões, configuração OAuth, tratamento técnico da recuperação; decisão funcional de exigir novo horário já aprovada |
+| Agenda | Transições detalhadas e solicitações após a consulta; recepção e administrador são os aprovadores |
+| Duração | Efeito de alterações no padrão; qualquer duração fica restrita a 15, 30, 45 ou 60 minutos |
 | Autoagendamento | Versão futura: identificação, horários disponíveis, antecedência, limites e regras; fora da implementação inicial |
-| Encaixes | Perfis autorizados e tratamento da substituição via caixa de seleção; encaixe somente em horário livre |
-| Lista de espera | Elegibilidade, prioridade, contato e eventual reserva temporária |
+| Encaixes | Destino e comunicação da consulta substituída; recepção e administrador autorizados |
+| Lista de espera | Esclarecer ordem de contato, elegibilidade, forma de contato e reserva temporária |
 | Recorrência | Incluir ou não consultas recorrentes |
-| Lembretes | Quantidade, antecedência, horários permitidos e consultas com pouca antecedência |
+| Lembretes | Repetição após falhas, prazo de processamento e efeitos da confirmação; regra das 8h da véspera já definida |
 | Acesso | Matriz detalhada por função; médico com recepção limitado à própria agenda |
 | Privacidade | Bases legais, contratos, retenção, responsáveis e fornecedores |
 | Qualidade | Aprovar metas de desempenho, capacidade, disponibilidade e recuperação |

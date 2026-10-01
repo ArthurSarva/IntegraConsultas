@@ -61,9 +61,11 @@ Não pesquisar pacientes de outras clínicas. Critérios de identificação, rep
 flowchart TD
  A["Paciente e médico"] --> B["Data, horário e modalidade"]
  B --> C["Duração: 15, 30, 45 ou 60 min"]
- C --> D{"Conflito interno?"}
+ C --> D{"Conflito do médico em qualquer clínica?"}
  D -->|Não| E["Verificar bloqueios e Google"]
- D -->|Sim| F{"Substituição autorizada e selecionada?"}
+ D -->|Sim| Z{"Consulta é da clínica ativa?"}
+ Z -->|Não| G
+ Z -->|Sim| F{"Substituição autorizada e selecionada?"}
  F -->|Não| G["Escolher outro horário"]
  F -->|Sim| H["Identificar consulta anterior"]
  H --> E
@@ -84,20 +86,22 @@ flowchart TD
  B -->|Não| C["Escolher outro horário"]
  B -->|Sim| D{"Há substituição?"}
  D -->|Sim| E["Preservar histórico anterior"]
- E --> F["Gravar substituição e tarefas"]
+ E --> F["Cancelar anterior e gravar nova consulta e tarefas"]
  D -->|Não| G["Gravar consulta e tarefas"]
  F --> H["Consulta agendada"]
  G --> H
  H --> I["Auditar"]
  I --> J["Processar integrações"]
  classDef pendente fill:#fff7ed,stroke:#c2410c,stroke-dasharray:5 5,color:#9a3412;
- P["PENDENTE: destino e aviso da consulta anterior"]:::pendente
+ P["PENDENTE: aviso ao paciente anterior"]:::pendente
  E -.-> P
 ```
 
-Substituição libera o horário da consulta anterior e cria a nova sem duas consultas ativas sobrepostas. Deve preservar histórico, invalidar lembretes antigos e atualizar eventos. Recepção e administrador podem substituir dentro do escopo. Estado final da consulta substituída e notificações permanecem pendentes. Não substituir compromissos pessoais do Google nem ignorar outros bloqueios.
+Substituição libera o horário da consulta anterior e cria a nova sem duas consultas ativas sobrepostas. Deve preservar histórico, invalidar lembretes antigos e atualizar eventos. Recepção e administrador podem substituir dentro do escopo. A consulta substituída passa a cancelada; comunicação ao paciente permanece pendente. Não substituir compromissos pessoais do Google nem ignorar outros bloqueios.
 
-A etapa de validação final protege contra concorrência interna; não garante disponibilidade externa imutável entre a consulta ao Google e a gravação.
+Agendada e confirmada ocupam o horário. Concluída, cancelada e falta não ocupam; solicitação pendente e conflito Google não liberam a vaga por si. Impedir sobreposição do mesmo médico entre clínicas, mostrando apenas indisponibilidade. Substituição nunca alcança consulta de outra clínica.
+
+A etapa de validação final protege contra concorrência interna, inclusive entre clínicas; não garante disponibilidade externa imutável entre a consulta ao Google e a gravação.
 
 ## 4. Confirmação e cancelamento pelo paciente
 
@@ -212,7 +216,7 @@ Proposta inicial: alterações manuais no Google não alteram consultas do Integ
 ## 8. Escopo futuro e pendências
 
 - Autoagendamento: versão futura, opcional por clínica; regras ainda não definidas.
-- Lista de espera: cadastro e aproveitamento de vagas acordados; ordem de contato acordada, mas significado operacional, elegibilidade e reserva pendentes.
+- Lista de espera: cadastro e aproveitamento de vagas acordados; prioridade pelo primeiro pedido; elegibilidade, desempate e reserva pendentes.
 - Consultas recorrentes: inclusão ainda não decidida.
 - Fluxos não aprovados não são inferidos como permissões implementáveis.
 - Segurança, isolamento entre clínicas, integridade, auditoria e restauração de backups continuam condições obrigatórias de lançamento.

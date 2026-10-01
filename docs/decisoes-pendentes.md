@@ -4,21 +4,30 @@
 
 Aplicação web; agenda própria; suporte a clínicas isoladas; funções por vínculo; Dev com seletor de clínica; WhatsApp; publicação de consultas no Google e consulta de ocupação externa; critérios obrigatórios de lançamento.
 
+## Regras confirmadas nesta atualização
+
+- Encaixes somente em horários livres; caixa de seleção para substituir consulta existente, preservando histórico e atualizando integrações.
+- Cancelamento imediato pelo paciente antes da véspera, pela data local da clínica; na véspera ou no dia, aprovação necessária.
+- Médico com função de recepção gerencia somente a própria agenda.
+- Falha do Google permite agendamento com alerta e atualização pendente para recuperação posterior.
+- Autoagendamento adiado para versão futura.
+- Profissional que agenda pode escolher duração excepcional; limites pendentes.
+
 ## Decisões necessárias
 
 | Tema | Definir |
 |---|---|
 | Infraestrutura | Aprovar stack, hospedagem, orçamento e capacidade esperada |
 | WhatsApp | Número, fornecedor, configuração oficial, modelos, custos e política de autorização |
-| Google | Calendários por clínica, permissões, configuração OAuth, conflitos e comportamento sem conexão |
-| Agenda | Transições de estados, cancelamento solicitado pelo paciente e regras de alteração |
-| Duração | Se alterações no padrão afetam somente novas consultas e como tratar exceções |
-| Autoagendamento | Identificação, horários disponíveis, antecedência, limites e regras de cancelamento |
-| Encaixes | Perfis autorizados e regra de conflito, mantendo integridade |
+| Google | Calendários por clínica, permissões, configuração OAuth, tratamento de conflitos após recuperação |
+| Agenda | Transições de estados, aprovadores de cancelamento e regras de alteração; cancelamento automático antes da véspera já definido |
+| Duração | Efeito de alterações no padrão e valores/limites de exceções escolhidas pelo profissional; padrão de 15, 30, 45 ou 60 minutos |
+| Autoagendamento | Versão futura: identificação, horários disponíveis, antecedência, limites e regras; fora da implementação inicial |
+| Encaixes | Perfis autorizados e tratamento da substituição via caixa de seleção; encaixe somente em horário livre |
 | Lista de espera | Elegibilidade, prioridade, contato e eventual reserva temporária |
 | Recorrência | Incluir ou não consultas recorrentes |
 | Lembretes | Quantidade, antecedência, horários permitidos e consultas com pouca antecedência |
-| Acesso | Matriz detalhada por função, escopo próprio e acúmulo de funções |
+| Acesso | Matriz detalhada por função; médico com recepção limitado à própria agenda |
 | Privacidade | Bases legais, contratos, retenção, responsáveis e fornecedores |
 | Qualidade | Aprovar metas de desempenho, capacidade, disponibilidade e recuperação |
 | Online | Origem dos links; geração automática de videoconferência não definida |

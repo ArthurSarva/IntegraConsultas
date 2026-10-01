@@ -3,27 +3,28 @@
 Status: documentação dos fluxos acordados; não representa funcionalidades implementadas.
 Base: [requisitos funcionais](requisitos-funcionais.md). Decisões não resolvidas estão identificadas como pendentes.
 
+## Leitura dos diagramas
+
+Caixas representam ações; losangos, decisões. Pendências aparecem com a palavra **PENDENTE**, borda tracejada e fundo laranja. Alertas usam fundo amarelo. A cor complementa o texto, sem ser o único indicador. Explicações e limites funcionais permanecem abaixo dos diagramas. Continuação entre diagramas evita setas de retorno excessivamente longas.
+
 ## 1. Acesso e visão geral
 
 ```mermaid
 flowchart TD
-    A["Abrir aplicação web"] --> B["Autenticar usuário"]
-    B --> C{"Autenticação válida?"}
-    C -->|Não| D["Negar acesso"]
-    C -->|Sim| E{"Perfil Dev?"}
-    E -->|Sim| F{"Área desejada"}
-    F -->|Plataforma| G["Cadastrar clínicas e administradores; vincular"]
-    F -->|Clínica| H["Selecionar uma clínica"]
-    E -->|Não| I["Selecionar clínica entre vínculos autorizados"]
-    H --> J["Exibir clínica ativa"]
-    I --> J
-    J --> K["Validar funções e escopo em cada operação"]
-    K --> L{"Operação autorizada?"}
-    L -->|Não| M["Negar operação e registrar ocorrência"]
-    L -->|Sim| N["Executar no contexto da clínica"]
-    N --> O["Pacientes, agenda, relatórios ou administração"]
-    O --> P["Registrar acessos e ações relevantes"]
-    P --> K
+ A["Login"] --> B{"Autenticado?"}
+ B -->|Não| X["Negar acesso"]
+ B -->|Sim| C{"Dev?"}
+ C -->|Sim| D{"Área"}
+ D -->|Plataforma| E["Clínicas e administradores"]
+ D -->|Clínica| F["Selecionar clínica"]
+ C -->|Não| G["Selecionar vínculo autorizado"]
+ F --> H["Exibir clínica ativa"]
+ G --> H
+ H --> I{"Permissão e escopo válidos?"}
+ I -->|Não| J["Negar e registrar"]
+ I -->|Sim| K["Executar e auditar"]
+ classDef fim fill:#dcfce7,stroke:#166534,color:#14532d;
+ class E,K fim;
 ```
 
 | Perfil | Áreas permitidas |
@@ -40,17 +41,16 @@ Seleção de clínica não substitui autorização no servidor. Trocar de clíni
 
 ```mermaid
 flowchart TD
-    A["Usuário autorizado na clínica"] --> B["Pesquisar paciente"]
-    B --> C{"Paciente cadastrado nesta clínica?"}
-    C -->|Sim| D["Selecionar cadastro autorizado"]
-    C -->|Não| E["Cadastrar dados mínimos necessários"]
-    E --> D
-    D --> F{"Há responsável ou contato compartilhado?"}
-    F -->|Sim| G["Cadastrar responsável e definir destinatário"]
-    F -->|Não| H["Definir contato do paciente"]
-    G --> I["Registrar preferência e autorização de mensagens"]
-    H --> I
-    I --> J["Disponibilizar paciente para agendamento"]
+ A["Pesquisar paciente"] --> B{"Existe na clínica?"}
+ B -->|Não| C["Cadastrar dados mínimos"]
+ B -->|Sim| D["Selecionar paciente"]
+ C --> D
+ D --> E{"Responsável ou contato compartilhado?"}
+ E -->|Sim| F["Definir responsável e destinatário"]
+ E -->|Não| G["Definir contato do paciente"]
+ F --> H["Registrar autorização de mensagens"]
+ G --> H
+ H --> I["Disponível para agendamento"]
 ```
 
 Não pesquisar pacientes de outras clínicas. Critérios de identificação, representação de menores e acesso detalhado ainda precisam ser especificados.
@@ -59,32 +59,40 @@ Não pesquisar pacientes de outras clínicas. Critérios de identificação, rep
 
 ```mermaid
 flowchart TD
-    A["Usuário autorizado inicia agendamento"] --> B["Selecionar paciente e profissional da clínica"]
-    B --> C["Informar data, horário e modalidade"]
-    C --> D["Duração padrão: 15, 30, 45 ou 60 minutos"]
-    D --> E{"Profissional que agenda escolhe exceção?"}
-    E -->|Sim| F["Escolher 15, 30, 45 ou 60 minutos para a consulta"]
-    E -->|Não| G["Manter duração padrão"]
-    F --> H["Verificar disponibilidade e conflitos internos"]
-    G --> H
-    H --> I{"Conflito com consulta existente?"}
-    I -->|Sim| J{"Recepção ou administrador selecionou substituir?"}
-    J -->|Não| K["Escolher outro horário; sem sobreposição"]
-    K --> C
-    J -->|Sim| L["Identificar consulta a substituir e preservar histórico"]
-    I -->|Não| M["Encaixe permitido apenas em intervalo livre"]
-    L --> N["Verificar demais bloqueios e disponibilidade Google"]
-    M --> N
-    N --> O{"Disponibilidade externa"}
-    O -->|Ocupado| K
-    O -->|Livre| P["Validar novamente integridade no banco"]
-    O -->|Google indisponível| Q["Exibir alerta; marcar verificação e atualização pendentes"]
-    Q --> P
-    P --> R{"Validação final permite operação?"}
-    R -->|Não| K
-    R -->|Sim| S["Gravar consulta e tarefas na mesma transação"]
-    S --> T["Estado: agendada; registrar auditoria"]
-    T --> U["Processar lembretes e integração Google"]
+ A["Paciente e médico"] --> B["Data, horário e modalidade"]
+ B --> C["Duração: 15, 30, 45 ou 60 min"]
+ C --> D{"Conflito interno?"}
+ D -->|Não| E["Verificar bloqueios e Google"]
+ D -->|Sim| F{"Substituição autorizada e selecionada?"}
+ F -->|Não| G["Escolher outro horário"]
+ F -->|Sim| H["Identificar consulta anterior"]
+ H --> E
+ E --> I{"Disponibilidade externa"}
+ I -->|Ocupado| G
+ I -->|Livre| J["Continuar para gravação"]
+ I -->|Indisponível| K["Alertar e marcar pendência"]
+ K --> J
+ classDef alerta fill:#fef3c7,stroke:#92400e,color:#78350f;
+ class K alerta;
+```
+
+### 3.1. Gravação e substituição
+
+```mermaid
+flowchart TD
+ A["Validar novamente no banco"] --> B{"Pode gravar?"}
+ B -->|Não| C["Escolher outro horário"]
+ B -->|Sim| D{"Há substituição?"}
+ D -->|Sim| E["Preservar histórico anterior"]
+ E --> F["Gravar substituição e tarefas"]
+ D -->|Não| G["Gravar consulta e tarefas"]
+ F --> H["Consulta agendada"]
+ G --> H
+ H --> I["Auditar"]
+ I --> J["Processar integrações"]
+ classDef pendente fill:#fff7ed,stroke:#c2410c,stroke-dasharray:5 5,color:#9a3412;
+ P["PENDENTE: destino e aviso da consulta anterior"]:::pendente
+ E -.-> P
 ```
 
 Substituição libera o horário da consulta anterior e cria a nova sem duas consultas ativas sobrepostas. Deve preservar histórico, invalidar lembretes antigos e atualizar eventos. Recepção e administrador podem substituir dentro do escopo. Estado final da consulta substituída e notificações permanecem pendentes. Não substituir compromissos pessoais do Google nem ignorar outros bloqueios.
@@ -95,24 +103,24 @@ A etapa de validação final protege contra concorrência interna; não garante 
 
 ```mermaid
 flowchart TD
-    A["Paciente responde pelo WhatsApp ou link"] --> B["Validar identidade ou vínculo seguro da ação com a consulta"]
-    B --> C{"Ação válida para consulta atual?"}
-    C -->|Não| D["Informar impedimento; preservar dados"]
-    C -->|Sim| E{"Ação"}
-    E -->|Confirmar| F["Registrar confirmação e auditoria"]
-    F --> G["Estado: confirmada"]
-    E -->|Cancelar| H["Comparar datas no fuso da clínica"]
-    H --> I{"Data da solicitação"}
-    I -->|Antes da véspera| J["Cancelar imediatamente"]
-    I -->|Na véspera ou no dia| K["Registrar solicitação pendente"]
-    I -->|Depois do dia| L["Tratamento pendente de definição"]
-    K --> M["Encaminhar à recepção ou administrador autorizado"]
-    M --> N{"Decisão"}
-    N -->|Aprovar| J
-    N -->|Não aprovar| O["Manter consulta; registrar decisão"]
-    J --> P["Estado: cancelada; registrar auditoria"]
-    P --> Q["Invalidar lembretes e solicitar remoção do evento Google"]
-    Q --> R["Disponibilizar horário para lista de espera"]
+ A["Validar resposta do paciente"] --> B{"Válida?"}
+ B -->|Não| C["Informar impedimento"]
+ B -->|Sim| D{"Ação"}
+ D -->|Confirmar| E["Registrar confirmada"]
+ D -->|Cancelar| F{"Data local da solicitação"}
+ F -->|Antes da véspera| G["Cancelar"]
+ F -->|Véspera ou dia| H["Solicitação pendente"]
+ H --> I{"Recepção ou administrador aprova?"}
+ I -->|Sim| G
+ I -->|Não| J["Manter consulta"]
+ F -->|Após o dia| P["PENDENTE: tratamento"] 
+ G --> K["Invalidar lembretes e remover evento"]
+ K --> L["Liberar horário à lista de espera"]
+ E --> M["Auditar"]
+ J --> M
+ L --> M
+ classDef pendente fill:#fff7ed,stroke:#c2410c,stroke-dasharray:5 5,color:#9a3412;
+ class P pendente;
 ```
 
 Exemplo: consulta na quinta-feira permite cancelamento automático até terça-feira. Quarta e quinta exigem aprovação. Solicitação pendente é um registro separado, não um novo estado da consulta. Notificações e regras para consultas concluídas ou com falta ainda serão detalhadas.
@@ -121,19 +129,20 @@ Exemplo: consulta na quinta-feira permite cancelamento automático até terça-f
 
 ```mermaid
 flowchart TD
-    A["Consulta existente"] --> B["Validar clínica, escopo e ação"]
-    B --> C{"Ação autorizada"}
-    C -->|Reagendar| D["Escolher novo intervalo e verificar disponibilidade"]
-    D --> E["Aplicar verificações do fluxo de agendamento"]
-    E --> F["Persistir novo horário; invalidar confirmação e tarefas antigas"]
-    F --> G["Exigir nova confirmação; avaliar lembrete e atualizar Google"]
-    C -->|Concluir| H["Recepção ou administrador registra concluída"]
-    C -->|Registrar ausência| I["Recepção ou administrador registra falta"]
-    C -->|Cancelar pela equipe| J["Fluxo e permissões pendentes"]
-    G --> K["Auditar alteração"]
-    H --> K
-    I --> K
-    J --> K
+ A["Validar clínica e permissão"] --> B{"Ação"}
+ B -->|Reagendar| C["Verificar novo intervalo"]
+ C --> D["Gravar horário e invalidar confirmação antiga"]
+ D --> E["Exigir nova confirmação"]
+ E --> F["Reavaliar lembrete e atualizar Google"]
+ B -->|Concluir| G["Recepção ou administrador: concluída"]
+ B -->|Ausência| H["Recepção ou administrador: falta"]
+ B -->|Cancelar pela equipe| P["PENDENTE: fluxo detalhado"]
+ F --> I["Auditar"]
+ G --> I
+ H --> I
+ P -.-> I
+ classDef pendente fill:#fff7ed,stroke:#c2410c,stroke-dasharray:5 5,color:#9a3412;
+ class P pendente;
 ```
 
 Concluída e falta não serão definidas automaticamente pela simples passagem do horário. Recepção e administrador registram conclusão ou falta. Reagendamento exige nova confirmação. Transições detalhadas permanecem pendentes.
@@ -142,26 +151,22 @@ Concluída e falta não serão definidas automaticamente pela simples passagem d
 
 ```mermaid
 flowchart TD
-    A["Avaliar lembrete da consulta atual"] --> A1{"Agendada com pelo menos 24h e antes ou às 8h da véspera?"}
-    A1 -->|Não| E["Não enviar lembrete tardio"]
-    A1 -->|Sim| A2["Persistir um lembrete para 8h da véspera no fuso da clínica"]
-    A2 --> B["Aguardar horário de envio"]
-    B --> C["Carregar consulta atual no contexto da clínica"]
-    C --> D{"Tarefa e destinatário ainda válidos?"}
-    D -->|Não| E["Invalidar ou não programar; não enviar"]
-    D -->|Sim| F["Verificar autorização, expiração e repetição"]
-    F --> G{"Pode enviar?"}
-    G -->|Não| E
-    G -->|Sim| H["Enviar por API oficial do WhatsApp"]
-    H --> I{"Resultado"}
-    I -->|Aceito| J["Registrar enviado; aguardar retorno"]
-    I -->|Falha transitória| K["Programar tentativa dentro do prazo"]
-    I -->|Resultado ambíguo| L["Verificar resultado antes de reenviar"]
-    I -->|Falha definitiva| M["Registrar falha e exibir à equipe"]
-    K --> B
-    L --> M
-    J --> N["Validar retorno do fornecedor e evitar processamento duplicado"]
-    N --> O["Atualizar entrega ou falha; auditar"]
+ A["Avaliar consulta"] --> B{"Antecedência ≥ 24h e envio ainda não passou?"}
+ B -->|Não| C["Não programar"]
+ B -->|Sim| D["Um lembrete: 8h da véspera"]
+ D --> E["Aguardar horário"]
+ E --> F{"Consulta, tarefa e destinatário válidos?"}
+ F -->|Não| G["Invalidar"]
+ F -->|Sim| H{"Autorização e prazo válidos?"}
+ H -->|Não| G
+ H -->|Sim| I["Enviar WhatsApp"]
+ I --> J{"Resultado"}
+ J -->|Aceito| K["Aguardar retorno de entrega"]
+ K --> L["Validar retorno e registrar"]
+ J -->|Falha definitiva| M["Exibir falha"]
+ J -->|Transitório ou ambíguo| P["PENDENTE: detalhar repetição e conciliação"]
+ classDef pendente fill:#fff7ed,stroke:#c2410c,stroke-dasharray:5 5,color:#9a3412;
+ class P pendente;
 ```
 
 Programar somente um lembrete às 8h da véspera. Não enviar para agendamentos com menos de 24 horas nem criar envio tardio quando o horário previsto já passou. Distinguir envio inicial tardio de repetição após falha: a política de repetição ainda está pendente. Interromper tentativas após cancelamento ou horário da consulta. Mensagem aceita não significa entregue. Consulta concluída, com falta ou tarefa de versão anterior não deve disparar lembrete. Políticas de repetição, ambiguidades e alertas serão detalhadas. Funcionamento independe do navegador.
@@ -170,24 +175,34 @@ Programar somente um lembrete às 8h da véspera. Não enviar para agendamentos 
 
 ```mermaid
 flowchart TD
-    A["Médico autoriza conta Google via OAuth"] --> B["Vincular calendário ao profissional e à clínica"]
-    B --> C["Consulta criada, alterada ou cancelada"]
-    C --> D["Persistir tarefa de sincronização"]
-    D --> E["Conferir versão atual e vínculo do evento"]
-    E --> F["Criar, atualizar, remover ou transferir evento"]
-    F --> G{"Resultado"}
-    G -->|Sucesso| H["Guardar vínculo; marcar sincronizado"]
-    G -->|Falha temporária| I["Manter pendente e repetir com segurança"]
-    G -->|Autorização revogada| J["Solicitar reconexão e manter pendência"]
-    I --> R["Após recuperação, consultar ocupação externa sem considerar o próprio evento"]
-    R --> S{"Há conflito?"}
-    S -->|Não| E
-    S -->|Sim| T["Preservar consulta e sinalizar conflito"]
-    T --> U["Exigir escolha de outro horário"]
-    U --> V["Aplicar fluxo de reagendamento e exigir nova confirmação"]
-    V --> E
-    J --> A
-    H --> K["Registrar auditoria e situação da integração"]
+ A["Médico autoriza Google"] --> B["Vincular calendário à clínica"]
+ B --> C["Consulta gera tarefa"]
+ C --> D["Conferir versão e evento"]
+ D --> E["Criar, atualizar, remover ou transferir"]
+ E --> F{"Resultado"}
+ F -->|Sucesso| G["Registrar sincronização"]
+ F -->|Falha temporária| H["Manter pendente"]
+ H --> I["Continuar no fluxo de recuperação"]
+ F -->|Revogado| J["Solicitar reconexão"]
+ classDef alerta fill:#fef3c7,stroke:#92400e,color:#78350f;
+ class H,J alerta;
+```
+
+### 7.1. Recuperação após indisponibilidade
+
+```mermaid
+flowchart TD
+ A["Google recuperado"] --> B["Consultar ocupação externa"]
+ B --> C["Desconsiderar o próprio evento"]
+ C --> D{"Conflito?"}
+ D -->|Não| E["Retomar sincronização"]
+ D -->|Sim| F["Preservar consulta e sinalizar"]
+ F --> G["Exigir outro horário"]
+ G --> H["Reagendar e exigir confirmação"]
+ H --> E
+ E --> I["Auditar resultado"]
+ classDef alerta fill:#fef3c7,stroke:#92400e,color:#78350f;
+ class F alerta;
 ```
 
 Consulta de ocupação externa é um fluxo separado da publicação de eventos. Após indisponibilidade, retomar verificação e atualização; sinalizar conflitos e exigir outro horário, preservando a consulta sem apagá-la automaticamente. Conflito não constitui um sexto estado da consulta. Excluir eventos do próprio sistema da interpretação de conflito consigo mesmos.

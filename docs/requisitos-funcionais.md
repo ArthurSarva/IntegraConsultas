@@ -29,11 +29,11 @@ Status: requisitos acordados, salvo itens explicitamente marcados como propostas
 
 - RF-11: Cadastrar pacientes, profissionais, disponibilidade e bloqueios.
 - RF-12: Agendar, cancelar e reagendar consultas.
-- RF-13: Estados: agendada, confirmada, concluída, cancelada e falta.
+- RF-13: Estados: agendada, confirmada, concluída, cancelada e falta. Agendada e confirmada ocupam o horário; concluída, cancelada e falta não ocupam. Solicitação de cancelamento pendente e conflito Google não liberam horário por si.
 - RF-14: Duração padrão configurável por profissional por seleção de 15, 30, 45 ou 60 minutos. O profissional que realiza o agendamento pode escolher uma duração diferente para a consulta. A duração específica também deve ser uma das opções 15, 30, 45 ou 60 minutos.
-- RF-15: Impedir sobreposição para o mesmo profissional, inclusive em operações simultâneas.
-- RF-16: Manter lista de espera para aproveitar horários liberados, seguindo ordem de contato. O significado operacional de ordem de contato ainda precisa ser esclarecido; não presumir ordem de entrada.
-- RF-17: Permitir encaixes somente a usuários autorizados e em horários livres, sem sobreposição. Disponibilizar caixa de seleção para substituir uma consulta preexistente, preservando seu histórico e atualizando seus lembretes e evento no Google. Substituição não autoriza manter duas consultas ativas no mesmo intervalo. Recepção e administrador podem substituir, respeitando o escopo. Estado final e notificação da consulta substituída ainda serão detalhados.
+- RF-15: Impedir sobreposição do mesmo médico, inclusive entre clínicas diferentes e em operações simultâneas. Exibir somente indisponibilidade, sem revelar dados de outra clínica; não permitir substituição de consulta de outra clínica.
+- RF-16: Manter lista de espera para aproveitar horários liberados, seguindo a ordem cronológica de quem fez o primeiro pedido.
+- RF-17: Permitir encaixes somente a usuários autorizados e em horários livres, sem sobreposição. Disponibilizar caixa de seleção para substituir uma consulta preexistente, preservando seu histórico e atualizando seus lembretes e evento no Google. Substituição não autoriza manter duas consultas ativas no mesmo intervalo. Recepção e administrador podem substituir, respeitando o escopo. A consulta substituída é cancelada, preservando histórico, invalidando suas ações e lembretes e solicitando remoção do evento Google. Comunicação ao paciente ainda será definida.
 - RF-18: Atender consultas presenciais e online, com endereço ou link correspondente.
 - RF-19: Não incluir controle de salas e equipamentos no escopo inicial.
 - RF-20: Paciente pode confirmar presença ou solicitar cancelamento pelo WhatsApp ou por link. Cancelar automaticamente quando a data da solicitação for anterior à véspera da consulta, considerando o fuso horário da clínica. Na véspera ou no dia da consulta, exigir aprovação. Exemplo: consulta na quinta-feira pode ser cancelada automaticamente até terça-feira; na quarta ou quinta, depende de aprovação. A solicitação pendente não cria um novo estado de consulta; recepção e administrador aprovam dentro do escopo. Solicitações posteriores à consulta ainda serão definidas.
@@ -75,4 +75,4 @@ Proposta inicial: publicar consultas do IntegraConsultas no Google; alterações
 
 ## Pendências
 
-Consultas recorrentes, transições detalhadas de estados, tratamento da consulta substituída, significado de ordem de contato, elegibilidade e reserva da lista de espera, política de repetição de lembretes e forma do link online serão especificados antes da implementação correspondente. Autoagendamento fica para versão futura.
+Consultas recorrentes, transições detalhadas de estados, comunicação da consulta substituída, elegibilidade, desempate e reserva da lista de espera, política de repetição de lembretes e forma do link online serão especificados antes da implementação correspondente. Autoagendamento fica para versão futura.

@@ -9,6 +9,7 @@ Fase de definição e documentação. Esta documentação registra os acordos at
 ## Documentação
 
 - [Requisitos funcionais e permissões](docs/requisitos-funcionais.md)
+- [Modelo de dados proposto](docs/modelo-dados.md)
 - [Arquitetura proposta](docs/arquitetura.md)
 - [Privacidade e segurança](docs/privacidade-seguranca.md)
 - [Qualidade e critérios de lançamento](docs/qualidade-lancamento.md)

@@ -71,14 +71,38 @@ O advisor de desempenho informa [cinco índices ainda não usados](https://supab
 
 ## Próxima etapa e limites
 
-Ainda faltam aplicação web, login/convites/recuperação, inscrição de MFA, perfil Dev inicial, cadastro administrativo, agenda e integrações. Não foram criados usuários, clínicas ou pacientes operacionais. Sem SMTP próprio ou integração automática GitHub/Supabase nesta etapa.
+Ainda faltam aplicação web, login/convites/recuperação, inscrição de MFA, perfil Dev inicial, cadastro administrativo, agenda e integrações. Não foram criados usuários, clínicas ou pacientes operacionais. Sem SMTP próprio nesta etapa. A integração GitHub/Supabase está vinculada conforme a seção abaixo, com implantação automática desabilitada.
 
 Antes de uso real: definir URLs e redirecionamentos da aplicação, provedor de email, provisionamento administrativo, política de sessões, operação de segredos e backup externo com restauração demonstrada. Isolamento, segurança, integridade da agenda, auditoria e recuperação continuam critérios obrigatórios de lançamento.
 
 Evoluções ficam em branches numeradas separadas, com escopo e branch confirmados; merge depende de autorização.
 
+## Integração GitHub
+
+Vínculo ativado e verificado no painel em 02/10/2026:
+
+| Item | Configuração |
+| --- | --- |
+| Repositório | [ArthurSarva/IntegraConsultas](https://github.com/ArthurSarva/IntegraConsultas) |
+| Projeto vinculado | IntegraConsultas-dev |
+| Diretório de trabalho | . (raiz do repositório, contendo supabase/) |
+| Branch de implantação | sem sincronização ativa; campo de branch desabilitado |
+| Deploy to production | desabilitado |
+| Automatic branching | desabilitado; indisponível no plano Free |
+| Branch limit | 0 |
+| Plano | Free, sem upgrade contratado |
+
+A integração está ativa, mas merges e pushes não aplicam automaticamente as migrações ao banco hospedado. A opção chamada “Deploy to production” no painel também controla essa aplicação ao projeto atual, embora este seja nosso ambiente de desenvolvimento. Ativá-la futuramente exige aprovação específica e revisão da branch alvo.
+
+A associação não cria um workflow de publicação, não provisiona Vercel nem adiciona credenciais ao Git. A validação existente no GitHub continua usando Supabase descartável, independente deste banco.
+
+Para conferir ou alterar o vínculo: [Configurações de integrações do projeto](https://supabase.com/dashboard/project/clhcnpxqptgzuxweuaru/settings/integrations). O painel mostrou “Change the connected repository”, “Disable integration” e o repositório correto após a ativação. A configuração foi conferida novamente após recarregar a página.
+
+As branches numeradas de trabalho no GitHub não são branches de banco do Supabase. Preview branches de banco são uma funcionalidade distinta e o painel exige Pro para sua criação automática; não foi habilitada nesta configuração.
+
 ## Referências
 
 - [Base local e testes](base-supabase.md)
 - [Segurança da API](https://supabase.com/docs/guides/api/securing-your-api)
+- [Integração GitHub oficial](https://supabase.com/docs/guides/deployment/branching/github-integration)
 - [Histórico de migrações](https://supabase.com/docs/reference/cli/supabase-migration-repair)

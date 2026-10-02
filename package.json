@@ -19,7 +19,8 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "test:web": "playwright test"
+    "test:web": "playwright test",
+    "test:invite:dev": "playwright test --config playwright.invite.config.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",

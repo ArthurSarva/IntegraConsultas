@@ -36,5 +36,7 @@ jobs:
         run: node scripts/start-test-functions.mjs
       - name: Validate web flows and real sessions
         run: pnpm test:web
+      - name: Validate invite reading with development Strict Mode
+        run: pnpm test:invite:dev
       - if: always()
         run: pnpm db:stop

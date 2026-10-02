@@ -36,6 +36,10 @@ O link é entregue manualmente pelo Dev, sem email automático. O segredo fica n
 
 O administrador escolhe a senha, entra e configura seu próprio autenticador. Nenhuma senha deve passar pelo Dev. O link aparece somente no resultado do cadastro; recarregar a página o descarta. Repetir o cadastro de uma conta ainda não confirmada permite gerar outro convite. Repetir para conta confirmada não redefine sua senha.
 
+A leitura do fragmento acontece uma única vez por montagem da tela, inclusive quando o Strict Mode repete os efeitos em desenvolvimento. O código fica somente em memória: atualizar a tela de aceite depois da remoção do fragmento não o recupera. Se ainda não aceitou, reabra o link completo originalmente recebido; não compartilhe esse link no chat ou nos logs.
+
+O comando `pnpm test:invite:dev` verifica a leitura em `next dev`, a remoção do fragmento, a ausência de persistência após recarregar e a recusa de uma página sem código. Usa códigos fictícios e nunca confirma o aceite. O CI inicia seu próprio servidor; localmente pode reutilizar a prévia já aberta. Para usar um Chrome instalado, definir `PLAYWRIGHT_CHANNEL=chrome`; sem essa opção, usa o Chromium do Playwright. O fluxo completo de aceite continua coberto pela suíte de produção com Supabase descartável.
+
 Auth e concessão de acesso pertencem a operações distintas: uma falha depois da criação da identidade pode deixar uma conta pendente sem acesso à clínica. Nesse caso, tentar novamente. O sistema não remove automaticamente a identidade, pois ela pode ter sido usada por outra clínica durante a operação.
 
 ## Ambiente e validação

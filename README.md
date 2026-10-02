@@ -12,6 +12,8 @@ Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada 
 
 - [Requisitos funcionais e permissões](docs/requisitos-funcionais.md)
 - [Modelo de dados proposto](docs/modelo-dados.md)
+- [Arquitetura do banco](docs/arquitetura-banco.md)
+- [Diagramas e fluxogramas do banco](docs/fluxograma-banco.md)
 - [Arquitetura proposta](docs/arquitetura.md)
 - [Decisões arquiteturais](docs/decisoes-arquiteturais/README.md)
 - [Supabase: ambientes, segurança e recuperação](docs/supabase.md)

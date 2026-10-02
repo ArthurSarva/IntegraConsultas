@@ -2,6 +2,8 @@
 
 Status: modelo lógico para revisão, baseado nos [requisitos](requisitos-funcionais.md) e [fluxogramas](fluxograma-sistema.md). Não cria banco, tabelas ou migrações. Campos, tipos e restrições abaixo são propostas técnicas; decisões funcionais pendentes não são resolvidas por este documento.
 
+Detalhamento físico proposto: [arquitetura do banco](arquitetura-banco.md) e [fluxogramas](fluxograma-banco.md). Supabase escolhido para banco e autenticação; estratégia de schemas, ocupação e SQL ainda depende de validação.
+
 ## 1. Convenções
 
 - Identificadores opacos, preferencialmente UUID.
@@ -29,7 +31,7 @@ erDiagram
 | Entidade | Campos principais propostos | Regras |
 |---|---|---|
 | CLINIC | id, nome, fuso, situação | Contexto de todos os dados operacionais |
-| USER | id, auth_subject, nome, situação, is_dev | Identidade global; credencial gerida pela solução de autenticação a escolher |
+| USER | id, auth_subject, nome, situação, is_dev | Identidade global; credencial gerida pelo Supabase Auth |
 | MEMBERSHIP | id, clinic_id, user_id, situação | Um vínculo por usuário e clínica; pode ser desativado |
 | ROLE_ASSIGNMENT | id, clinic_id, membership_id, função, escopo | Funções: administrador, médico e recepção; escopo próprio ou clínica conforme regras |
 | PHYSICIAN_IDENTITY | id, user_id, situação | Identidade global mínima do médico para verificar ocupação sem compartilhar pacientes; representação técnica proposta |
@@ -200,7 +202,7 @@ Essas restrições são especificação proposta, não SQL validado.
 | Google | Quantidade de calendários, compartilhamento de conexão e autenticação |
 | Pacientes | Campos mínimos, representação de menores e acesso detalhado |
 | Estados | Transições e cancelamento após atendimento |
-| Operação | Repetição, retenção, infraestrutura e solução de autenticação |
+| Operação | Repetição, retenção, infraestrutura, sessões e configuração do Supabase Auth |
 | Futuro | Autoagendamento, recorrência e forma do link online |
 
 Após revisão: matriz detalhada de permissões, registro das decisões arquiteturais e desenho físico/migrações em mudanças separadas. Este documento não aprova automaticamente decisões pendentes.

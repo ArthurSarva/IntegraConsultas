@@ -30,7 +30,8 @@ test('reception can select only its clinic and logout clears access',async({page
  await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);
  await page.getByRole('button',{name:'Acessar clínica'}).click();await expect(page).toHaveURL(/\/inicio$/);
  await expect(page.getByText('Recepção',{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Sair',exact:true}).click();await page.goto('/inicio');await expect(page).toHaveURL(/\/entrar$/);
+ await page.getByRole('button',{name:'Sair',exact:true}).click();await expect(page).toHaveURL(/\/entrar$/);
+ await page.goto('/inicio');await expect(page).toHaveURL(/\/entrar$/);
 });
 test('doctor with reception retains own scope',async({page})=>{
  await login(page,'doctor');await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);

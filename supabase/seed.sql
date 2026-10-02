@@ -1,0 +1,2 @@
+-- No operational users, clinical data or credentials seeded automatically.
+-- Disposable fixtures are loaded only by the test suites.

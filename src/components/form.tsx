@@ -1,6 +1,6 @@
 'use client';
 import {useActionState} from 'react';
-export type FormState={error?:string;message?:string;factorId?:string;qr?:string;secret?:string};
+export type FormState={error?:string;message?:string;factorId?:string;qr?:string;secret?:string;inviteUrl?:string};
 export const initial:FormState={};
 export function ActionForm({action,children,label}:{action:(state:FormState,data:FormData)=>Promise<FormState>;children:React.ReactNode;label:string}) {
   const [state,submit,pending]=useActionState(action,initial);

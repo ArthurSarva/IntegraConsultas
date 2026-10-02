@@ -1,0 +1,6 @@
+import {randomUUID} from 'node:crypto';import Link from 'next/link';
+import {dev} from '@/lib/dev';import {AuthShell} from '@/components/shell';import {ActionForm} from '@/components/form';import {createClinic} from '@/app/dev/actions';
+export default async function NewClinic(){await dev();return <AuthShell title="Cadastrar clínica" description="Adicione uma clínica à plataforma. Os dados serão mantidos separados das outras clínicas.">
+ <ActionForm action={createClinic} label="Cadastrar clínica"><input type="hidden" name="operation" value={randomUUID()}/><label htmlFor="name">Nome da clínica</label><input id="name" name="name" required maxLength={160} autoComplete="organization"/><label htmlFor="timezone">Fuso horário</label><select id="timezone" name="timezone" defaultValue="America/Sao_Paulo"><option value="America/Sao_Paulo">Brasília — UTC−3</option><option value="America/Manaus">Manaus — UTC−4</option><option value="America/Cuiaba">Cuiabá — UTC−4</option><option value="America/Rio_Branco">Rio Branco — UTC−5</option><option value="America/Noronha">Fernando de Noronha — UTC−2</option></select></ActionForm>
+ <Link className="text-link" href="/clinicas">Voltar às clínicas</Link></AuthShell>;}
+

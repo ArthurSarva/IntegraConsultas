@@ -14,6 +14,7 @@ Consulte [base web e autenticação](docs/base-web.md) para iniciar a aplicaçã
 
 ## Documentação
 
+- [Cadastro de clínicas e convite de administradores](docs/cadastro-clinicas-administradores.md)
 - [Requisitos funcionais e permissões](docs/requisitos-funcionais.md)
 - [Modelo de dados proposto](docs/modelo-dados.md)
 - [Arquitetura do banco](docs/arquitetura-banco.md)
@@ -31,5 +32,4 @@ Consulte [base web e autenticação](docs/base-web.md) para iniciar a aplicaçã
 A agenda oficial pertence ao IntegraConsultas. Cada clínica possui dados e permissões isolados. O início operacional será com uma clínica, mantendo suporte a múltiplas clínicas. Segurança, isolamento, integridade da agenda, auditoria e restauração de backups são condições obrigatórias de lançamento.
 
 Não inserir dados reais de pacientes, senhas, tokens ou credenciais neste repositório.
-
 

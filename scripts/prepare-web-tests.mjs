@@ -19,14 +19,14 @@ const client=createClient(url,adminKey,{auth:{persistSession:false,autoRefreshTo
 const password=randomBytes(24).toString('base64url')+'aA1!';
 const clinics={a:randomUUID(),b:randomUUID()};
 const users={};let queries=[];
-for(const role of ['receptionA','receptionB','doctor','administrator','dev','unprovisioned']){
+for(const role of ['receptionA','receptionB','doctor','administrator','dev','provisioner','existing','unprovisioned']){
  const email='web-'+role.toLowerCase()+'-'+randomUUID()+'@example.invalid';
  const {data,error}=await client.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{is_dev:true}});
  if(error||!data.user)throw new Error('Unable to create disposable Auth identity');
  users[role]={id:data.user.id,email};
- if(role==='unprovisioned')continue;
- queries.push("insert into app.users(id,display_name,is_dev) values ('"+data.user.id+"','Teste "+role+"',"+(role==='dev')+");");
- if(role==='dev')continue;
+ if(role==='unprovisioned'||role==='existing')continue;
+ queries.push("insert into app.users(id,display_name,is_dev) values ('"+data.user.id+"','Teste "+role+"',"+(role==='dev'||role==='provisioner')+");");
+ if(role==='dev'||role==='provisioner')continue;
  const membership=randomUUID(),clinic=role==='receptionB'?clinics.b:clinics.a;
  queries.push("insert into app.memberships(id,clinic_id,user_id) values ('"+membership+"','"+clinic+"','"+data.user.id+"');");
  const roles=role==='doctor'?[['doctor','own'],['reception','own']]:[[role==='administrator'?'administrator':'reception','clinic']];

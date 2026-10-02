@@ -10,6 +10,7 @@ coverage/
 .next/
 playwright-report/
 test-results/
+.functions-test.log
 *.tsbuildinfo
 .supabase/
 .supabase-home/

@@ -1,16 +1,8 @@
 import {test,expect,type Page} from '@playwright/test';
 import {createClient} from '@supabase/supabase-js';
-import {createHmac} from 'node:crypto';
+import {totp} from './totp';
 import {fixture,localOnly,sql} from './local';
 const f=fixture();localOnly(f.url);
-function totp(secret:string){
- const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let bits='';
- for(const c of secret.toUpperCase().replace(/=/g,''))bits+=alphabet.indexOf(c).toString(2).padStart(5,'0');
- const bytes=[];for(let i=0;i+8<=bits.length;i+=8)bytes.push(parseInt(bits.slice(i,i+8),2));
- const counter=Buffer.alloc(8);counter.writeBigUInt64BE(BigInt(Math.floor(Date.now()/30000)));
- const hash=createHmac('sha1',Buffer.from(bytes)).update(counter).digest();const offset=hash[19]&15;
- return ((hash.readUInt32BE(offset)&0x7fffffff)%1000000).toString().padStart(6,'0');
-}
 async function login(page:Page,role:string){
  await page.goto('/entrar');await page.getByLabel('Email',{exact:true}).fill(f.users[role].email);
  await page.getByLabel('Senha',{exact:true}).fill(f.password);await page.getByRole('button',{name:'Entrar',exact:true}).click();

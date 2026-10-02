@@ -6,7 +6,7 @@ Aplicação web para agendamento de consultas de múltiplas clínicas, lembretes
 
 Fase de base inicial e documentação. Esta documentação registra os acordos até 02/10/2026; não representa aplicação clínica pronta nem certificação de conformidade com a LGPD.
 
-Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada em 02/10/2026. Base local de identidade, clínicas, vínculos e isolamento disponível; projeto online e aplicação web ainda não configurados.
+Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada em 02/10/2026. Base de identidade, clínicas, vínculos e isolamento disponível localmente e no Supabase de desenvolvimento. Aplicação web ainda não implementada.
 
 ## Desenvolvimento
 
@@ -21,6 +21,7 @@ Consulte [base Supabase e testes](docs/base-supabase.md) para preparar o ambient
 - [Arquitetura proposta](docs/arquitetura.md)
 - [Decisões arquiteturais](docs/decisoes-arquiteturais/README.md)
 - [Supabase: ambientes, segurança e recuperação](docs/supabase.md)
+- [Supabase de desenvolvimento: configuração e validação](docs/supabase-dev.md)
 - [Privacidade e segurança](docs/privacidade-seguranca.md)
 - [Qualidade e critérios de lançamento](docs/qualidade-lancamento.md)
 - [Decisões pendentes e execução](docs/decisoes-pendentes.md)

@@ -1,6 +1,6 @@
 # Base Supabase — desenvolvimento e validação
 
-Atualização: 02/10/2026. Primeira base executável, limitada à identidade, clínicas, vínculos e seleção de contexto. Sem aplicação web, agenda ou integrações externas nesta etapa.
+Atualização: 02/10/2026. Base executável, limitada à identidade, clínicas, vínculos e seleção de contexto. O ambiente hospedado e sua validação estão descritos em [Supabase de desenvolvimento](supabase-dev.md). Sem aplicação web, agenda ou integrações externas nesta etapa.
 
 ## Implementado
 
@@ -41,7 +41,7 @@ pnpm db:advisors
 pnpm db:stop
 ```
 
-db:reset é destrutivo apenas para o banco local descartável; não usar em ambientes com dados a preservar. Os scripts explicitam --local e não fazem link, push ou alteração de banco online. Criar projeto online continua etapa separada.
+db:reset é destrutivo apenas para o banco local descartável; não usar em ambientes com dados a preservar. Os scripts explicitam --local e não fazem link, push ou alteração de banco online. O projeto online é gerenciado separadamente conforme [configuração de desenvolvimento](supabase-dev.md).
 
 A CLI usa .supabase-home/ local ao checkout por padrão, evitando escrever na pasta pessoal; configurações e caches são ignorados pelo Git. Variável SUPABASE_HOME definida pelo operador prevalece.
 
@@ -49,13 +49,13 @@ A CLI usa .supabase-home/ local ao checkout por padrão, evitando escrever na pa
 
 ## Testes e limitações
 
-pnpm db:test cria PostgreSQL embarcado em memória. A migration é aplicada integralmente; fixtures e 39 verificações exercitam SQL real com SET ROLE authenticated/anon, incluindo isolamento, MFA, contexto por sessão, troca de contexto, revogação, autoelevação, auditoria, relações e unicidades.
+pnpm db:test cria PostgreSQL embarcado em memória. A migration é aplicada integralmente; fixtures e 43 verificações exercitam SQL real com SET ROLE authenticated/anon, incluindo isolamento, MFA, contexto por sessão, troca de contexto, revogação, autoelevação, auditoria, relações e unicidades.
 
 O suporte Auth embarcado está em tests/support/auth.sql, fora das migrações. Ele simula auth.users, auth.sessions, auth.uid() e auth.jwt(); não valida assinatura de JWT, serviço Auth, PostgREST, cookies, enrollment MFA ou rede. PGlite tem uma conexão; não valida concorrência multiconexão.
 
 pnpm db:test:supabase gera entrada pgTAP a partir das mesmas fixtures e assertions, usando tabelas/funções Auth reais da pilha local. Uma falha SQL interrompe a suíte. O arquivo gerado é ignorado para evitar duplicação divergente. Testes continuam simulando claims de sessão; login e API fim a fim serão uma etapa própria.
 
-Resultado nesta preparação: 39 verificações embarcadas aprovadas. Pilha completa, lint/advisors e lista de migrações não executaram nesta máquina por ausência de banco local/Docker. Workflow do GitHub preparado para executá-los; consultar o resultado do PR antes do merge. Falha estruturada da CLI é tratada como falha mesmo quando o processo retorna código zero.
+Resultado atual: 43 verificações embarcadas aprovadas, incluindo regressão de exposição automática. A base inicial possuía 39 verificações. Pilha completa, lint/advisors e lista de migrações não executaram nesta máquina por ausência de banco local/Docker. Workflow do GitHub preparado para executá-los; consultar o resultado do PR antes do merge. Falha estruturada da CLI é tratada como falha mesmo quando o processo retorna código zero.
 
 ## Migrações e evolução
 
@@ -73,4 +73,5 @@ Critérios de lançamento, restauração, integridade da agenda e auditoria comp
 - [CLI oficial](https://supabase.com/docs/guides/local-development/cli/getting-started)
 - [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
 - [Testes de banco](https://supabase.com/docs/guides/database/testing)
+
 

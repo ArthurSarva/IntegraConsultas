@@ -1,6 +1,6 @@
 # Supabase de desenvolvimento
 
-Configurado em 02/10/2026. Ambiente exclusivo de desenvolvimento, sem dados reais de pacientes e sem contas operacionais provisionadas.
+Configurado em 02/10/2026. Ambiente exclusivo de desenvolvimento, sem dados reais de pacientes e com o primeiro perfil Dev provisionado; nenhuma clínica ou paciente operacional cadastrado.
 
 ## Identificação
 
@@ -24,10 +24,11 @@ A migração de identidade foi obtida da main no commit 8820e788e3c9f25032193497
 1. 20261002192130_identity_clinics.sql: identidade, clínicas, vínculos, funções, contexto por sessão, auditoria, RLS e grants.
 2. 20261002202342_harden_public_defaults.sql: revogação dos grants automáticos de novos objetos em public.
 3. 20261002202446_revoke_public_function_defaults.sql: revogação global do EXECUTE padrão de funções para PUBLIC e papéis de API.
+4. 20261002205049_web_session_profile.sql: perfil próprio e contexto da clínica para a base web.
 
 O EXECUTE padrão de PUBLIC é global: uma revogação apenas por schema não o remove. As futuras funções criadas pelo papel postgres precisam de grants explícitos. A alteração global afeta objetos futuros em qualquer schema, incluindo extensões instaladas futuramente; revisar os grants necessários durante cada instalação. Não altera permissões de funções já existentes.
 
-A aplicação remota foi feita pelo conector Supabase, que gera versões próprias. O histórico foi alinhado aos nomes gerados pela CLI no repositório, sem reaplicar DDL: cada atualização de versão exigiu nome, versão anterior e igualdade integral do SQL armazenado, além da ausência da versão de destino. A listagem final contém exatamente as três versões acima. Não repetir esse procedimento rotineiramente: a próxima evolução deve usar migrações versionadas, com conferência do histórico antes do envio.
+A aplicação remota foi feita pelo conector Supabase, que gera versões próprias. O histórico foi alinhado aos nomes gerados pela CLI no repositório, sem reaplicar DDL: cada atualização de versão exigiu nome, versão anterior e igualdade integral do SQL armazenado, além da ausência da versão de destino. A listagem final contém exatamente as quatro versões acima. Não repetir esse procedimento rotineiramente: a próxima evolução deve usar migrações versionadas, com conferência do histórico antes do envio.
 
 ## Configurações do serviço
 
@@ -46,22 +47,22 @@ A aplicação remota foi feita pelo conector Supabase, que gera versões própri
 | Sessões AAL1 com fator inscrito | limitação de 15 minutos do serviço mantida |
 | MFA SMS | desabilitado; não necessário nesta etapa |
 
-As três funções api.list_clinics, api.current_clinic e api.select_clinic têm EXECUTE somente para authenticated. Expor o schema não concede execução ao anônimo. O painel pode indicar zero funções com exposição pública; não habilitar um toggle que conceda anon para eliminar esse indicador.
+As cinco funções api.list_clinics, api.current_clinic, api.select_clinic, api.session_profile e api.workspace têm EXECUTE somente para authenticated. Expor o schema não concede execução ao anônimo. O painel pode indicar zero funções com exposição pública; não habilitar um toggle que conceda anon para eliminar esse indicador.
 
-O banco exige aal2 para Dev e administrador. Habilitar TOTP no serviço permite inscrição/verificação; o fluxo de MFA da aplicação ainda será implementado. A configuração local não aplica automaticamente estas opções ao ambiente hospedado.
+O banco exige aal2 para Dev e administrador. Habilitar TOTP no serviço permite inscrição/verificação; o fluxo de inscrição e confirmação está implementado na [base web](base-web.md). A configuração local não aplica automaticamente estas opções ao ambiente hospedado.
 
 ## Validação realizada
 
 - Seis tabelas com RLS; nenhuma escrita concedida a authenticated nas tabelas da base.
-- Acesso direto a private.clinic_contexts negado para authenticated; três RPCs sem EXECUTE para anon.
+- Acesso direto a private.clinic_contexts negado para authenticated; cinco RPCs sem EXECUTE para anon.
 - SQL online sob authenticated sem sessão válida: diretório vazio e contexto nulo.
 - Novos objetos de prova em public, criados em transação e desfeitos com rollback: SELECT anônimo, INSERT autenticado e EXECUTE anônimo/autenticado de função não recebem grants automáticos. Não restaram objetos de prova.
 - Pela rede, com chave publishable: RPC no perfil api retornou HTTP 401 / SQLSTATE 42501 para acesso anônimo; perfis private, app e public retornaram HTTP 406 / PGRST106.
 - Auth settings retornou cadastro desabilitado e confirmação de email exigida.
 - 43 verificações SQL locais aprovadas, incluindo os quatro casos de regressão de exposição automática. A suíte com identidades fictícias permanece limitada ao banco descartável; não foi executada no Auth hospedado.
-- Consultados advisors de segurança e desempenho: nenhum ERROR/WARN observado. Avisos INFO descritos abaixo.
+- Na validação inicial da base não havia ERROR/WARN. Após provisionamento do primeiro usuário, o advisor sinalizou proteção contra senhas vazadas desativada (WARN); o recurso exige plano Pro ou superior. Nenhum upgrade foi contratado. Avisos INFO descritos abaixo.
 
-A suíte local e a suíte Supabase no GitHub simulam claims de sessão. Não validam login real, assinatura de JWT, cookies, inscrição de MFA ou CRUD da aplicação. Os resultados da pilha completa para esta branch ficam na execução do PR.
+A suíte SQL simula claims de sessão. A base web acrescenta testes separados com Auth real em Supabase descartável para login, cookies, inscrição de MFA, isolamento e revogação. Consulte [base web e testes](base-web.md). O titular concluiu o primeiro login hospedado: perfil Dev ativo, fator TOTP verificado e sessão aal2 válida foram conferidos no banco, sem ler credenciais.
 
 ## Avisos informativos
 
@@ -71,7 +72,7 @@ O advisor de desempenho informa [cinco índices ainda não usados](https://supab
 
 ## Próxima etapa e limites
 
-Ainda faltam aplicação web, login/convites/recuperação, inscrição de MFA, perfil Dev inicial, cadastro administrativo, agenda e integrações. Não foram criados usuários, clínicas ou pacientes operacionais. Sem SMTP próprio nesta etapa. A integração GitHub/Supabase está vinculada conforme a seção abaixo, com implantação automática desabilitada.
+Base web de login/recuperação, inscrição de MFA e primeiro Dev implementados. Ainda faltam cadastro administrativo, agenda, pacientes e integrações. Nenhuma clínica ou paciente operacional cadastrado. Sem SMTP próprio nesta etapa. A integração GitHub/Supabase está vinculada conforme a seção abaixo, com implantação automática desabilitada.
 
 Antes de uso real: definir URLs e redirecionamentos da aplicação, provedor de email, provisionamento administrativo, política de sessões, operação de segredos e backup externo com restauração demonstrada. Isolamento, segurança, integridade da agenda, auditoria e recuperação continuam critérios obrigatórios de lançamento.
 
@@ -106,3 +107,4 @@ As branches numeradas de trabalho no GitHub não são branches de banco do Supab
 - [Segurança da API](https://supabase.com/docs/guides/api/securing-your-api)
 - [Integração GitHub oficial](https://supabase.com/docs/guides/deployment/branching/github-integration)
 - [Histórico de migrações](https://supabase.com/docs/reference/cli/supabase-migration-repair)
+

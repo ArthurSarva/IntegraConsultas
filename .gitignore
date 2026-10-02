@@ -2,10 +2,15 @@ node_modules/
 .env
 .env.*
 !.env.example
+.env.web-fixture.json
 .pnpm-store/
 supabase/.temp/
 supabase/.branches/
 coverage/
+.next/
+playwright-report/
+test-results/
+*.tsbuildinfo
 .supabase/
 .supabase-home/
 supabase/tests/base.test.sql

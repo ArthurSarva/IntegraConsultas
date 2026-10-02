@@ -16,16 +16,23 @@ async function login(page:Page,role:string){
  await page.getByLabel('Senha',{exact:true}).fill(f.password);await page.getByRole('button',{name:'Entrar',exact:true}).click();
 }
 function client(){return createClient(f.url,f.key,{db:{schema:'api'},auth:{persistSession:false,autoRefreshToken:false}});}
+test('email login provider is enabled while public signup remains disabled',async()=>{
+ const c=client();
+ const result=await c.auth.signUp({email:'blocked-signup@example.invalid',password:f.password});
+ expect(result.error?.code).toBe('signup_disabled');
+ expect(result.data.user).toBeNull();
+});
 test('protected routes redirect; invalid credentials stay generic',async({page})=>{
  await page.goto('/inicio');await expect(page).toHaveURL(/\/entrar$/);
  await page.getByLabel('Email',{exact:true}).fill('missing@example.invalid');
  await page.getByLabel('Senha',{exact:true}).fill('invalid-password');
  await page.getByRole('button',{name:'Entrar',exact:true}).click();
- await expect(page.getByRole('alert')).toContainText('Não foi possível entrar');
+ await expect(page.getByRole('alert').filter({hasText:'Não foi possível entrar'})).toBeVisible();
 });
 test('reception can select only its clinic and logout clears access',async({page})=>{
  await login(page,'receptionA');await expect(page).toHaveURL(/\/clinicas$/);
  const cookies=await page.context().cookies();
+ expect(cookies.filter(c=>c.name.startsWith('sb-')).length).toBeGreaterThan(0);
  expect(cookies.filter(c=>c.name.startsWith('sb-')).every(c=>c.httpOnly&&c.sameSite==='Lax')).toBe(true);
  await expect(page.getByRole('option',{name:'Clínica de teste B',exact:true})).toHaveCount(0);
  await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);
@@ -87,4 +94,11 @@ test('recovery token defines password and requires a new login',async({page})=>{
  await page.getByRole('button',{name:'Salvar senha',exact:true}).click();
  await expect(page).toHaveURL(/\/entrar\?senha=atualizada$/);
  const c=client();expect((await c.auth.signInWithPassword({email:f.users.unprovisioned.email,password:newPassword})).error).toBeNull();
+});
+test('recovery form accepts valid email without revealing account existence',async({page})=>{
+ await page.goto('/recuperar');
+ await page.getByLabel('Email',{exact:true}).fill(f.users.receptionB.email);
+ await page.getByRole('button',{name:'Solicitar recuperação'}).click();
+ await expect(page.getByRole('status')).toContainText('Se o endereço puder receber');
+ await expect(page.locator('.form [role="alert"]')).toHaveCount(0);
 });

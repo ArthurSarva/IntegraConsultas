@@ -8,6 +8,8 @@ Next.js 16, TypeScript e Supabase Auth. Entrada por email/senha, saída da sess�
 
 Somente contas provisionadas em app.users entram no sistema. Cadastro público continua desativado. Papéis e vínculos são consultados no banco; metadata editável pelo usuário não concede privilégios.
 
+No config local, auth.enable_signup=false bloqueia cadastro público; auth.email.enable_signup=true mantém o provedor de email habilitado para login de contas provisionadas. Desabilitar ambos impediria também login por email.
+
 O primeiro Dev foi provisionado em desenvolvimento após criação da credencial pelo titular. Dados pessoais, senha e identificadores da conta não integram migrations nem fixtures. O titular configura seu autenticador no primeiro acesso. Recuperação por perda de autenticador exige procedimento de verificação de identidade a definir antes do lançamento.
 
 ## Fluxo

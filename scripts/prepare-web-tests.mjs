@@ -33,9 +33,9 @@ for(const role of ['receptionA','receptionB','doctor','administrator','dev','unp
  for(const [name,scope] of roles)queries.push("insert into app.membership_roles(clinic_id,membership_id,role,scope) values ('"+clinic+"','"+membership+"','"+name+"','"+scope+"');");
 }
 queries.unshift("insert into app.clinics(id,name) values ('"+clinics.a+"','Clínica de teste A'),('"+clinics.b+"','Clínica de teste B');");
-const r=spawnSync(process.execPath,['scripts/run-supabase.mjs','db','query','--local',queries.join('\n')],{encoding:'utf8'});
-if(r.status!==0)throw new Error('Unable to provision local fixtures');
+// The CLI driver uses the extended protocol: provision atomically as one statement.
+const r=spawnSync(process.execPath,['scripts/run-supabase.mjs','db','query','--local','do $web_fixture$ begin '+queries.join('\n')+' end $web_fixture$;'],{encoding:'utf8'});
+if(r.status!==0)throw new Error('Unable to provision local fixtures: '+(r.stderr||r.stdout).slice(0,1500));
 await writeFile('.env.web-fixture.json',JSON.stringify({url,key,adminKey,password,clinics,users}));
 await writeFile('.env.test.local','NEXT_PUBLIC_SUPABASE_URL='+url+'\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='+key+'\nAPP_ORIGIN=http://127.0.0.1:3000\n');
 console.log('Disposable web fixtures prepared; no real email was sent.');
-

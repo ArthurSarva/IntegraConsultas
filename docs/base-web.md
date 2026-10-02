@@ -59,6 +59,8 @@ APP_ORIGIN é origem fixa sem caminho. HTTPS é obrigatório fora de localhost/1
 
 A configuração de redirecionamento e entrega de email no projeto hospedado ainda precisa ser validada. O SMTP padrão possui restrições. Testes locais com token de recuperação não comprovam entrega de emails no ambiente hospedado. SMTP próprio, URL pública e validação de entrega permanecem pendentes.
 
+O advisor hospedado sinaliza proteção contra senhas vazadas desativada. O [recurso do Supabase](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) exige plano Pro ou superior; nenhum plano pago foi ativado. O tratamento dessa limitação é pendência de segurança para lançamento. O aviso INFO sobre private.clinic_contexts sem policy é intencional: acesso direto é negado; somente helpers internos controlam o contexto.
+
 ## Verificação
 
 pnpm typecheck, pnpm build e pnpm db:test verificam tipos, compilação e 55 asserções SQL.

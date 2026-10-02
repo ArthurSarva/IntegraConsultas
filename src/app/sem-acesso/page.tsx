@@ -1,0 +1,2 @@
+import {authenticated} from '@/lib/identity';import {logout} from '@/app/actions';import {AuthShell} from '@/components/shell';
+export default async function NoAccess(){await authenticated();return <AuthShell title="Acesso ainda não liberado" description="Sua conta precisa de um perfil ativo no IntegraConsultas. Solicite a liberação à administração."><form action={logout}><button className="secondary">Sair da conta</button></form></AuthShell>;}

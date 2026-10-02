@@ -1,0 +1,1 @@
+'use client';export default function ErrorPage({reset}:{reset:()=>void}){return <main id="conteudo" className="fallback"><h1>Não foi possível carregar</h1><p>Tente novamente em instantes. Se persistir, fale com a administração.</p><button className="primary" onClick={reset}>Tentar novamente</button></main>;}

@@ -14,10 +14,27 @@
     "db:test": "node --test tests/database.test.mjs",
     "db:test:supabase": "node scripts/build-database-tests.mjs && node scripts/run-supabase.mjs test db --local",
     "db:lint": "node scripts/run-supabase.mjs db lint --local --schema app,private,api,audit --level warning --fail-on error",
-    "db:advisors": "node scripts/run-supabase.mjs db advisors --local --type security --fail-on error"
+    "db:advisors": "node scripts/run-supabase.mjs db advisors --local --type security --fail-on error",
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "test:web": "playwright test"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.19.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "supabase": "2.119.0",
-    "@electric-sql/pglite": "0.5.8"
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.2",
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   }
 }

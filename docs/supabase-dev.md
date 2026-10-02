@@ -26,10 +26,11 @@ A migração de identidade foi obtida da main no commit 8820e788e3c9f25032193497
 3. 20261002202446_revoke_public_function_defaults.sql: revogação global do EXECUTE padrão de funções para PUBLIC e papéis de API.
 4. 20261002205049_web_session_profile.sql: perfil próprio e contexto da clínica para a base web.
 5. 20261002221455_clinic_administration.sql: cadastro de clínica pelo Dev, vínculo de administrador, contexto obrigatório, idempotência e auditoria.
+6. 20261002225446_audit_request_pair.sql: rejeição explícita de identificador de operação sem fingerprint de auditoria.
 
 O EXECUTE padrão de PUBLIC é global: uma revogação apenas por schema não o remove. As futuras funções criadas pelo papel postgres precisam de grants explícitos. A alteração global afeta objetos futuros em qualquer schema, incluindo extensões instaladas futuramente; revisar os grants necessários durante cada instalação. Não altera permissões de funções já existentes.
 
-A aplicação remota foi feita pelo conector Supabase, que gera versões próprias. O histórico foi alinhado aos nomes gerados pela CLI no repositório, sem reaplicar DDL: cada atualização de versão exigiu nome, versão anterior e igualdade integral do SQL armazenado, além da ausência da versão de destino. A listagem final contém exatamente as cinco versões acima. Não repetir esse procedimento rotineiramente: a próxima evolução deve usar migrações versionadas, com conferência do histórico antes do envio.
+A aplicação remota foi feita pelo conector Supabase, que gera versões próprias. O histórico foi alinhado aos nomes gerados pela CLI no repositório, sem reaplicar DDL: cada atualização de versão exigiu nome, versão anterior e igualdade integral do SQL armazenado, além da ausência da versão de destino. A listagem final contém exatamente as seis versões acima. Não repetir esse procedimento rotineiramente: a próxima evolução deve usar migrações versionadas, com conferência do histórico antes do envio.
 
 ## Configurações do serviço
 

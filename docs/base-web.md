@@ -65,7 +65,7 @@ O advisor hospedado sinaliza proteção contra senhas vazadas desativada. O [rec
 
 ## Verificação
 
-pnpm typecheck, pnpm build e pnpm db:test verificam tipos, compilação e 85 asserções SQL (55 da base web e 30 do cadastro administrativo).
+pnpm typecheck, pnpm build e pnpm db:test verificam tipos, compilação e 86 asserções SQL (55 da base web e 31 do cadastro administrativo).
 
 Testes de navegador com Supabase descartável:
 

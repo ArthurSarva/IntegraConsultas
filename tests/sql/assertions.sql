@@ -204,3 +204,4 @@ reset role;
 select pg_temp.assert_true((select count(*)=0 from audit.events where request_id in ('50000000-0000-4000-8000-000000000002','50000000-0000-4000-8000-000000000004','50000000-0000-4000-8000-000000000005')),'Falhas não deixam escritas parciais');
 select pg_temp.assert_true((select count(*)=0 from app.memberships where user_id='10000000-0000-4000-8000-000000000009'),'Conta inativa não recebeu vínculo parcial');
 select pg_temp.assert_true((select count(*)=0 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('api','private') and has_function_privilege('anon',p.oid,'EXECUTE')),'Novas funções negadas ao anônimo');
+select pg_temp.assert_error($test$insert into audit.events(clinic_id,actor_user_id,action,request_id) values('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000005','clinic.created','50000000-0000-4000-8000-000000000006')$test$,'23514','Identificador de operação exige fingerprint na auditoria');

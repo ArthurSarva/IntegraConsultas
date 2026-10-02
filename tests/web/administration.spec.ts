@@ -75,6 +75,35 @@ test('Dev creates a clinic, provisions an administrator and accepts one-use invi
  await expect(page.getByLabel('Link do convite')).toHaveCount(0);
  await expect(page.getByText(f.users.existing.email,{exact:true})).toBeVisible();
  expect((await createClient(f.url,f.key).auth.signInWithPassword({email:f.users.existing.email,password:f.password})).error).toBeNull();
+ await expect(page.locator('li').filter({hasText:f.users.existing.email}).getByRole('button',{name:'Cancelar convite'})).toHaveCount(0);
+ const cancelledEmail='cancelled-'+randomUUID()+'@example.invalid';
+ await page.getByLabel('Nome do administrador').fill('Convite para cancelar');
+ await page.getByLabel('Email do administrador').fill(cancelledEmail);
+ await page.getByRole('button',{name:'Cadastrar administrador'}).click();
+ await expect(page.getByRole('status')).toContainText('Administrador vinculado');
+ const oldInvite=await page.getByLabel('Link do convite').inputValue();
+ const pendingRow=page.locator('li').filter({hasText:cancelledEmail});
+ await pendingRow.getByRole('button',{name:'Cancelar convite',exact:true}).click();
+ await expect(pendingRow.getByText('Convite cancelado',{exact:true})).toBeVisible();
+ await expect(pendingRow.getByRole('button')).toHaveCount(0);
+ const oldHash=new URLSearchParams(new URL(oldInvite).hash.slice(1)).get('token')!;
+ const invalidated=await createClient(f.url,f.key,{auth:{persistSession:false,autoRefreshToken:false}}).auth.verifyOtp({token_hash:oldHash,type:'invite'});
+ expect(invalidated.error).not.toBeNull();
+ expect(invalidated.data.session).toBeNull();
+ const cancelledUser=(await admin.auth.admin.listUsers({page:1,perPage:1000})).data.users.find(u=>u.email===cancelledEmail)!;
+ expect(cancelledUser.email_confirmed_at).toBeFalsy();
+ const wrongCancel=await fetch(f.url+'/functions/v1/provision-administrator',{method:'POST',headers:{apikey:f.key,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},body:JSON.stringify({action:'cancel',clinic_id:f.clinics.a,user_id:cancelledUser.id,operation_id:randomUUID()})});
+ expect(wrongCancel.status).toBe(403);
+ // A fresh explicit invitation works after cancellation; the previous link stays invalid.
+ await page.getByLabel('Nome do administrador').fill('Convite para cancelar');
+ await page.getByLabel('Email do administrador').fill(cancelledEmail);
+ await page.getByRole('button',{name:'Cadastrar administrador'}).click();
+ await expect(page.getByRole('status')).toContainText('Administrador vinculado');
+ const freshInvite=await page.getByLabel('Link do convite').inputValue();
+ expect(freshInvite).not.toBe(oldInvite);
+ await expect(pendingRow.getByText('Aguardando aceite do convite',{exact:true})).toBeVisible();
+ const freshHash=new URLSearchParams(new URL(freshInvite).hash.slice(1)).get('token')!;
+ expect((await createClient(f.url,f.key,{auth:{persistSession:false,autoRefreshToken:false}}).auth.verifyOtp({token_hash:freshHash,type:'invite'})).error).toBeNull();
 });
 test('administrator function rejects anonymous and reception before Auth provisioning',async()=>{
  const body={clinic_id:f.clinics.a,operation_id:randomUUID(),email:'denied-'+randomUUID()+'@example.invalid',display_name:'Negado'};
@@ -85,4 +114,3 @@ test('administrator function rejects anonymous and reception before Auth provisi
  const jwt=result.data.session!.access_token;
  expect((await fetch(endpoint,{method:'POST',headers:{apikey:f.key,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},body:JSON.stringify(body)})).status).toBe(403);
 });
-

@@ -25,3 +25,11 @@ export async function provisionAdministrator(_state:FormState,data:FormData):Pro
  const hash=result.data.invite_hash as string|undefined;
  return {message:String(result.data.message),inviteUrl:hash?origin+'/convite#token='+encodeURIComponent(hash):undefined};
 }
+export async function cancelAdministratorInvitation(_state:FormState,data:FormData):Promise<FormState>{
+ const {client,clinic}=await devWorkspace();
+ if(String(data.get('clinic')??'')!==clinic.id)return {error:'A clínica ativa mudou. Atualize a página antes de continuar.'};
+ const result=await client.functions.invoke('provision-administrator',{body:{action:'cancel',clinic_id:clinic.id,user_id:String(data.get('user')??''),operation_id:String(data.get('operation')??'')}});
+ revalidatePath('/dev/administradores');
+ if(result.error)return {error:'Não foi possível concluir o cancelamento. Atualize a página e tente novamente.'};
+ return {message:'Convite cancelado. O link anterior não pode mais ser utilizado.'};
+}

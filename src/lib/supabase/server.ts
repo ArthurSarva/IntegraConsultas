@@ -6,6 +6,7 @@ export async function createClient() {
   const store=await cookies();
   const {url,key}=supabaseConfig();
   return createServerClient(url,key,{
+    cookieOptions:{httpOnly:true,sameSite:'lax',secure:process.env.APP_ORIGIN?.startsWith('https://')??false},
     db:{schema:'api'}, global:{fetch:(input,init)=>fetch(input,{...init,cache:'no-store'})},
     cookies:{
       getAll:()=>store.getAll(),

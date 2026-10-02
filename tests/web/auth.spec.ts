@@ -25,6 +25,8 @@ test('protected routes redirect; invalid credentials stay generic',async({page})
 });
 test('reception can select only its clinic and logout clears access',async({page})=>{
  await login(page,'receptionA');await expect(page).toHaveURL(/\/clinicas$/);
+ const cookies=await page.context().cookies();
+ expect(cookies.filter(c=>c.name.startsWith('sb-')).every(c=>c.httpOnly&&c.sameSite==='Lax')).toBe(true);
  await expect(page.getByRole('option',{name:'Clínica de teste B',exact:true})).toHaveCount(0);
  await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);
  await page.getByRole('button',{name:'Acessar clínica'}).click();await expect(page).toHaveURL(/\/inicio$/);

@@ -5,7 +5,7 @@ export async function proxy(request:NextRequest) {
   let response=NextResponse.next({request});
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return response;
   const {url,key}=supabaseConfig();
-  const client=createServerClient(url,key,{cookies:{
+  const client=createServerClient(url,key,{cookieOptions:{httpOnly:true,sameSite:'lax',secure:process.env.APP_ORIGIN?.startsWith('https://')??false},cookies:{
     getAll:()=>request.cookies.getAll(),
     setAll:(items,headers)=>{
       for (const {name,value} of items) request.cookies.set(name,value);

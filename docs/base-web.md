@@ -37,6 +37,7 @@ A página inicial mostra módulos em preparação. Médico com recepção manté
 - api.workspace() retorna apenas clínica selecionada e papéis atuais. Ambas são SECURITY INVOKER, search_path vazio e execução restrita a authenticated.
 - RLS e helpers verificam vínculo, usuário ativo, sessão existente e MFA; revogação vale mesmo com JWT antigo.
 - Respostas de sessão não são armazenadas em cache compartilhado. O proxy preserva cabeçalhos de cache da biblioteca SSR.
+- Auth funciona no servidor; cookies de sessão são HttpOnly e SameSite=Lax, com Secure em origens HTTPS. Não há cliente Auth no navegador que dependa de ler esses cookies.
 - Callback aceita PKCE ou token de convite/recuperação, com origem fixa, sem destino externo fornecido pelo usuário.
 - Erros de login e recuperação não revelam se um email existe.
 - Definição de senha exige sessão válida, confirmação e 12–128 caracteres; ao concluir encerra todas as sessões.
@@ -77,4 +78,3 @@ A integração contínua verifica entrada/saída, médico com recepção, MFA ad
 ## Limites
 
 Agenda, pacientes, WhatsApp, Google Agenda, exportação e interface administrativa de cadastro ficam para próximas etapas. Este incremento não comprova todos os critérios de lançamento ou conformidade integral com LGPD. Auditoria da seleção de clínica existe; auditoria completa de acesso/operações e restauração de backups permanecem critérios obrigatórios.
-

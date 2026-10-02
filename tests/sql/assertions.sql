@@ -18,6 +18,8 @@ begin
   end if;
 end;
 $$;
+-- Test-only helpers must be callable after SET ROLE; no production grants.
+grant execute on function pg_temp.assert_true(boolean,text), pg_temp.assert_error(text,text,text) to anon, authenticated;
 reset role;
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-4000-8000-000000000001","session_id":"40000000-0000-4000-8000-000000000001","aal":"aal1","role":"authenticated","user_metadata":{"is_dev":true}}', true);
 set local role authenticated;
@@ -117,3 +119,12 @@ select pg_temp.assert_error($test$select api.select_clinic('20000000-0000-4000-8
 reset role;
 select pg_temp.assert_true((select bool_and(relrowsecurity) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('app','private','audit') and c.relkind='r'), 'RLS em todas as tabelas');
 select pg_temp.assert_true((select count(*)=0 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('api','private') and has_function_privilege('anon',p.oid,'EXECUTE')), 'Nenhuma função acessível ao anônimo');
+
+-- Regression: new public objects must not become accessible without explicit grants.
+create table public.exposure_probe(id bigint generated always as identity primary key);
+create function public.exposure_probe_rpc() returns integer language sql as $$ select 1; $$;
+select pg_temp.assert_true(not has_table_privilege('anon','public.exposure_probe','SELECT'), 'Nova tabela public não exposta ao anônimo');
+select pg_temp.assert_true(not has_table_privilege('authenticated','public.exposure_probe','INSERT'), 'Nova tabela public não concede escrita automática');
+select pg_temp.assert_true(not has_function_privilege('anon','public.exposure_probe_rpc()','EXECUTE'), 'Nova RPC public não executável por anônimo');
+select pg_temp.assert_true(not has_function_privilege('authenticated','public.exposure_probe_rpc()','EXECUTE'), 'Nova RPC public exige grant explícito');
+

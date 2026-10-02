@@ -1,6 +1,6 @@
 # ADR-002 — PostgreSQL, isolamento e ocupação global
 
-Status: proposto. Não contém SQL ou migrações aprovadas.
+Status: PostgreSQL no Supabase escolhido em 02/10/2026, conforme [ADR-007](007-supabase.md). Estratégia física de isolamento e ocupação global ainda proposta; não contém SQL ou migrações aprovadas.
 
 ## Contexto
 

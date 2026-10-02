@@ -21,13 +21,14 @@ Aplicação web; agenda própria; suporte a clínicas isoladas; funções por v�
 - Um lembrete às 8h da véspera; não enviar para agendamentos com menos de 24 horas nem após perda desse horário.
 - Conflito revelado pelo Google exige novo horário, preservando a consulta e sinalizando conflito.
 - Recepção e administrador editam pacientes, consultam informações e bloqueiam horários; somente administrador exporta.
-- Infraestrutura gratuita, normas e metas de qualidade sugeridas ainda não foram aprovadas.
+- Supabase aprovado para PostgreSQL e autenticação em 02/10/2026; início no plano gratuito e separação de desenvolvimento/testes e produção documentados em [Supabase](supabase.md).
+- Hospedagem da aplicação e das automações, normas detalhadas e metas numéricas de qualidade continuam pendentes.
 
 ## Decisões necessárias
 
 | Tema | Definir |
 |---|---|
-| Infraestrutura | Aprovar stack, hospedagem, orçamento e capacidade esperada |
+| Infraestrutura | Supabase escolhido; definir região, conta responsável, capacidade, hospedagem da aplicação e das automações, orçamento e critérios de evolução do plano |
 | WhatsApp | Número, fornecedor, configuração oficial, modelos, custos e política de autorização |
 | Google | Calendários por clínica, permissões, configuração OAuth, tratamento técnico da recuperação; decisão funcional de exigir novo horário já aprovada |
 | Agenda | Transições detalhadas e solicitações após a consulta; recepção e administrador são os aprovadores |
@@ -37,9 +38,9 @@ Aplicação web; agenda própria; suporte a clínicas isoladas; funções por v�
 | Lista de espera | Elegibilidade, desempate, forma de contato e reserva temporária; prioridade pelo primeiro pedido |
 | Recorrência | Incluir ou não consultas recorrentes |
 | Lembretes | Repetição após falhas, prazo de processamento e efeitos da confirmação; regra das 8h da véspera já definida |
-| Acesso | Matriz detalhada por função; médico com recepção limitado à própria agenda |
+| Acesso | Supabase Auth escolhido; validar convite, recuperação, sessões, MFA e revogação conforme matriz de permissões; médico com recepção limitado à própria agenda |
 | Privacidade | Bases legais, contratos, retenção, responsáveis e fornecedores |
-| Qualidade | Aprovar metas de desempenho, capacidade, disponibilidade e recuperação |
+| Qualidade | Aprovar metas de desempenho, capacidade, disponibilidade e recuperação; definir destino, frequência, retenção e responsável por backups externos e comprovar restauração |
 | Online | Origem dos links; geração automática de videoconferência não definida |
 
 ## Sequência proposta

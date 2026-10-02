@@ -113,7 +113,7 @@ as $$
 declare target uuid:=private.current_clinic_id();
 begin
  perform private.require_dev_clinic(target);
- return query select p.id,p.display_name,u.email,p.active and m.active,u.email_confirmed_at is not null
+ return query select p.id,p.display_name,u.email::text,p.active and m.active,u.email_confirmed_at is not null
   from app.memberships m join app.membership_roles r on r.clinic_id=m.clinic_id and r.membership_id=m.id
   join app.users p on p.id=m.user_id join auth.users u on u.id=p.id
   where m.clinic_id=target and r.role='administrator' order by p.display_name,p.id;

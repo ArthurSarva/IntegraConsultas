@@ -65,15 +65,16 @@ O advisor hospedado sinaliza proteção contra senhas vazadas desativada. O [rec
 
 ## Verificação
 
-pnpm typecheck, pnpm build e pnpm db:test verificam tipos, compilação e 55 asserções SQL.
+pnpm typecheck, pnpm build e pnpm db:test verificam tipos, compilação e 85 asserções SQL (55 da base web e 30 do cadastro administrativo).
 
 Testes de navegador com Supabase descartável:
 
 1. pnpm db:start e pnpm db:reset.
 2. node scripts/prepare-web-tests.mjs.
 3. pnpm exec playwright install chromium.
-4. pnpm test:web.
-5. pnpm db:stop.
+4. node scripts/start-test-functions.mjs.
+5. pnpm test:web.
+6. pnpm db:stop.
 
 A preparação rejeita URLs diferentes de http://127.0.0.1:54321. Chave administrativa e senhas aleatórias são usadas somente para preparar esse banco e ficam em arquivo ignorado. Não executar fixtures no projeto hospedado.
 
@@ -81,4 +82,4 @@ A integração contínua verifica entrada/saída, médico com recepção, MFA ad
 
 ## Limites
 
-Agenda, pacientes, WhatsApp, Google Agenda, exportação e interface administrativa de cadastro ficam para próximas etapas. Este incremento não comprova todos os critérios de lançamento ou conformidade integral com LGPD. Auditoria da seleção de clínica existe; auditoria completa de acesso/operações e restauração de backups permanecem critérios obrigatórios.
+O [cadastro de clínicas e convite de administradores pelo Dev](cadastro-clinicas-administradores.md) amplia esta base na branch 012. Agenda, pacientes, WhatsApp, Google Agenda, exportação e cadastro dos demais perfis ficam para próximas etapas. Este incremento não comprova todos os critérios de lançamento ou conformidade integral com LGPD. Auditoria da seleção e cadastro de clínica e do vínculo de administrador existe; auditoria completa de acesso/operações e restauração de backups permanecem critérios obrigatórios.

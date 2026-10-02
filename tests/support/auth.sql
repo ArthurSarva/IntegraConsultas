@@ -3,7 +3,7 @@ create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;
 create schema auth;
-create table auth.users(id uuid primary key, email text, email_confirmed_at timestamptz, deleted_at timestamptz, banned_until timestamptz);
+create table auth.users(id uuid primary key, email varchar(255), email_confirmed_at timestamptz, deleted_at timestamptz, banned_until timestamptz);
 create table auth.sessions(id uuid primary key, user_id uuid not null references auth.users(id), not_after timestamptz);
 create function auth.jwt() returns jsonb language sql stable as $$
   select coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, '{}'::jsonb);

@@ -1,0 +1,88 @@
+import {test,expect,type Page,type BrowserContext} from '@playwright/test';
+import {createClient} from '@supabase/supabase-js';import {randomUUID} from 'node:crypto';
+import {fixture,localOnly} from './local';import {totp} from './totp';
+const f=fixture();localOnly(f.url);
+async function login(page:Page,email:string,password:string){
+ await page.goto('/entrar');await page.getByLabel('Email',{exact:true}).fill(email);await page.getByLabel('Senha',{exact:true}).fill(password);await page.getByRole('button',{name:'Entrar',exact:true}).click();
+}
+async function setupMfa(page:Page){
+ await expect(page).toHaveURL(/\/seguranca$/);
+ await page.getByRole('button',{name:'Configurar autenticador'}).click();await page.getByText('Configurar manualmente',{exact:true}).click();
+ const secret=await page.locator('.totp-secret').innerText();await page.getByLabel('Código de verificação').fill(totp(secret));
+ await page.getByRole('button',{name:'Confirmar acesso'}).click();await expect(page).toHaveURL(/\/clinicas$/);
+}
+async function token(context:BrowserContext){
+ const cookies=(await context.cookies()).filter(c=>/^sb-.+-auth-token(?:\.\d+)?$/.test(c.name)).sort((a,b)=>a.name.localeCompare(b.name));
+ const value=cookies.map(c=>c.value).join('');if(!value.startsWith('base64-'))throw new Error('Unexpected local fixture cookie encoding');
+ return JSON.parse(Buffer.from(value.slice(7),'base64url').toString('utf8')).access_token as string;
+}
+test('Dev creates a clinic, provisions an administrator and accepts one-use invitation',async({page,browser})=>{
+ test.setTimeout(120000);
+ await login(page,f.users.provisioner.email,f.password);await setupMfa(page);
+ await page.getByRole('link',{name:'Cadastrar clínica',exact:true}).click();
+ const clinicName='Clínica cadastrada '+randomUUID();
+ await page.getByLabel('Nome da clínica').fill(clinicName);
+ await page.getByLabel('Fuso horário').selectOption('America/Manaus');
+ await page.getByRole('button',{name:'Cadastrar clínica',exact:true}).click();
+ await expect(page.getByRole('status')).toContainText('Clínica cadastrada');
+ await page.getByLabel('Clínica',{exact:true}).selectOption({label:clinicName});
+ const clinicId=await page.getByLabel('Clínica',{exact:true}).inputValue();
+ await page.getByRole('button',{name:'Acessar clínica'}).click();
+ await page.getByRole('link',{name:'Gerenciar administradores'}).click();
+ const jwt=await token(page.context());
+ const client=createClient(f.url,f.key,{db:{schema:'api'},global:{headers:{Authorization:'Bearer '+jwt}},auth:{persistSession:false,autoRefreshToken:false}});
+ const request=randomUUID();
+ const first=await client.rpc('create_clinic',{clinic_name:'Idempotente',clinic_timezone:'America/Sao_Paulo',operation_id:request});
+ expect(first.error).toBeNull();
+ expect((await client.rpc('create_clinic',{clinic_name:'Idempotente',clinic_timezone:'America/Sao_Paulo',operation_id:request})).data).toBe(first.data);
+ expect((await client.rpc('create_clinic',{clinic_name:'Outros dados',clinic_timezone:'America/Sao_Paulo',operation_id:request})).error?.code).toBe('42501');
+ const rejectedEmail='rejected-'+randomUUID()+'@example.invalid';
+ const wrong=await fetch(f.url+'/functions/v1/provision-administrator',{method:'POST',headers:{apikey:f.key,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},body:JSON.stringify({clinic_id:f.clinics.a,operation_id:randomUUID(),email:rejectedEmail,display_name:'Não autorizado'})});
+ expect(wrong.status).toBe(403);
+ const admin=createClient(f.url,f.adminKey,{auth:{persistSession:false,autoRefreshToken:false}});
+ expect((await admin.auth.admin.listUsers({page:1,perPage:1000})).data.users.some(u=>u.email===rejectedEmail)).toBe(false);
+ const email='invited-'+randomUUID()+'@example.invalid';
+ await page.getByLabel('Nome do administrador').fill('Administrador convidado');
+ await page.getByLabel('Email do administrador').fill(email);
+ await page.getByRole('button',{name:'Cadastrar administrador'}).click();
+ await expect(page.getByRole('status')).toContainText('Administrador vinculado');
+ const invite=await page.getByLabel('Link do convite').inputValue();
+ expect(invite).toContain('/convite#token=');expect(invite).not.toContain(email);
+ await expect(page.getByText(email,{exact:true})).toBeVisible();
+ const context=await browser.newContext();const invitedPage=await context.newPage();
+ await invitedPage.goto(invite);await expect(invitedPage).toHaveURL(/\/convite$/);
+ await invitedPage.getByRole('button',{name:'Aceitar convite'}).click();await expect(invitedPage).toHaveURL(/\/definir-senha$/);
+ await invitedPage.getByLabel('Nova senha',{exact:true}).fill(f.password);
+ await invitedPage.getByLabel('Confirmar senha',{exact:true}).fill(f.password);
+ await invitedPage.getByRole('button',{name:'Salvar senha'}).click();await expect(invitedPage).toHaveURL(/\/entrar\?senha=atualizada$/);
+ await login(invitedPage,email,f.password);await setupMfa(invitedPage);
+ await expect(invitedPage.getByRole('option',{name:clinicName,exact:true})).toHaveCount(1);
+ await expect(invitedPage.getByRole('option',{name:'Clínica de teste A',exact:true})).toHaveCount(0);
+ await expect(invitedPage.getByRole('link',{name:'Cadastrar clínica',exact:true})).toHaveCount(0);
+ await invitedPage.getByLabel('Clínica',{exact:true}).selectOption(clinicId);
+ await invitedPage.getByRole('button',{name:'Acessar clínica'}).click();
+ await expect(invitedPage.getByText('Administrador de clínica',{exact:true})).toBeVisible();
+ await invitedPage.goto('/dev/administradores');await expect(invitedPage).toHaveURL(/\/inicio$/);
+ const replay=await browser.newContext();const replayPage=await replay.newPage();await replayPage.goto(invite);
+ await replayPage.getByRole('button',{name:'Aceitar convite'}).click();
+ await expect(replayPage.getByRole('alert').filter({hasText:'O convite é inválido ou expirou'})).toBeVisible();
+ await replay.close();await context.close();
+ // Existing confirmed identities are linked without replacing their password or emitting a link.
+ await page.getByLabel('Nome do administrador').fill('Administrador existente');
+ await page.getByLabel('Email do administrador').fill(f.users.existing.email);
+ await page.getByRole('button',{name:'Cadastrar administrador'}).click();
+ await expect(page.getByRole('status')).toContainText('Conta existente vinculada');
+ await expect(page.getByLabel('Link do convite')).toHaveCount(0);
+ await expect(page.getByText(f.users.existing.email,{exact:true})).toBeVisible();
+ expect((await createClient(f.url,f.key).auth.signInWithPassword({email:f.users.existing.email,password:f.password})).error).toBeNull();
+});
+test('administrator function rejects anonymous and reception before Auth provisioning',async()=>{
+ const body={clinic_id:f.clinics.a,operation_id:randomUUID(),email:'denied-'+randomUUID()+'@example.invalid',display_name:'Negado'};
+ const endpoint=f.url+'/functions/v1/provision-administrator';
+ expect((await fetch(endpoint,{method:'POST',headers:{apikey:f.key,'Content-Type':'application/json'},body:JSON.stringify(body)})).status).toBe(401);
+ const c=createClient(f.url,f.key,{auth:{persistSession:false,autoRefreshToken:false}});
+ const result=await c.auth.signInWithPassword({email:f.users.receptionA.email,password:f.password});expect(result.error).toBeNull();
+ const jwt=result.data.session!.access_token;
+ expect((await fetch(endpoint,{method:'POST',headers:{apikey:f.key,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},body:JSON.stringify(body)})).status).toBe(403);
+});
+

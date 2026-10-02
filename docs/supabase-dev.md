@@ -25,10 +25,12 @@ A migração de identidade foi obtida da main no commit 8820e788e3c9f25032193497
 2. 20261002202342_harden_public_defaults.sql: revogação dos grants automáticos de novos objetos em public.
 3. 20261002202446_revoke_public_function_defaults.sql: revogação global do EXECUTE padrão de funções para PUBLIC e papéis de API.
 4. 20261002205049_web_session_profile.sql: perfil próprio e contexto da clínica para a base web.
+5. 20261002221455_clinic_administration.sql: cadastro de clínica pelo Dev, vínculo de administrador, contexto obrigatório, idempotência e auditoria.
+6. 20261002225446_audit_request_pair.sql: rejeição explícita de identificador de operação sem fingerprint de auditoria.
 
 O EXECUTE padrão de PUBLIC é global: uma revogação apenas por schema não o remove. As futuras funções criadas pelo papel postgres precisam de grants explícitos. A alteração global afeta objetos futuros em qualquer schema, incluindo extensões instaladas futuramente; revisar os grants necessários durante cada instalação. Não altera permissões de funções já existentes.
 
-A aplicação remota foi feita pelo conector Supabase, que gera versões próprias. O histórico foi alinhado aos nomes gerados pela CLI no repositório, sem reaplicar DDL: cada atualização de versão exigiu nome, versão anterior e igualdade integral do SQL armazenado, além da ausência da versão de destino. A listagem final contém exatamente as quatro versões acima. Não repetir esse procedimento rotineiramente: a próxima evolução deve usar migrações versionadas, com conferência do histórico antes do envio.
+A aplicação remota foi feita pelo conector Supabase, que gera versões próprias. O histórico foi alinhado aos nomes gerados pela CLI no repositório, sem reaplicar DDL: cada atualização de versão exigiu nome, versão anterior e igualdade integral do SQL armazenado, além da ausência da versão de destino. A listagem final contém exatamente as seis versões acima. Não repetir esse procedimento rotineiramente: a próxima evolução deve usar migrações versionadas, com conferência do histórico antes do envio.
 
 ## Configurações do serviço
 
@@ -68,11 +70,11 @@ A suíte SQL simula claims de sessão. A base web acrescenta testes separados co
 
 O advisor de segurança informa [RLS sem política em private.clinic_contexts](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). É intencional: schema privado, sem grants de tabela para usuários comuns e acesso apenas por funções internas protegidas. Não criar uma política permissiva para silenciar o aviso.
 
-O advisor de desempenho informa [cinco índices ainda não usados](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index). O ambiente está vazio e sem tráfego operacional; os índices sustentam relações e consultas previstas. Reavaliar com uso real antes de removê-los.
+O advisor de desempenho informa [seis índices ainda não usados](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index), incluindo o índice do alvo de auditoria acrescentado na branch 012. O ambiente está vazio e sem tráfego operacional; os índices sustentam relações e consultas previstas. Reavaliar com uso real antes de removê-los.
 
 ## Próxima etapa e limites
 
-Base web de login/recuperação, inscrição de MFA e primeiro Dev implementados. Ainda faltam cadastro administrativo, agenda, pacientes e integrações. Nenhuma clínica ou paciente operacional cadastrado. Sem SMTP próprio nesta etapa. A integração GitHub/Supabase está vinculada conforme a seção abaixo, com implantação automática desabilitada.
+Base web de login/recuperação, inscrição de MFA e primeiro Dev implementados. A branch 012 acrescenta [cadastro de clínicas e convite de administradores](cadastro-clinicas-administradores.md). Migração e função `provision-administrator` instaladas no desenvolvimento. A função verifica o JWT com Auth e o contexto Dev/MFA no banco; a credencial privilegiada é usada somente para gerar convite no Auth. Sem envio automático de email. Ainda faltam cadastro dos demais perfis, agenda, pacientes e integrações. Nenhuma clínica ou paciente operacional cadastrado. Sem SMTP próprio nesta etapa. A integração GitHub/Supabase está vinculada conforme a seção abaixo, com implantação automática desabilitada.
 
 Antes de uso real: definir URLs e redirecionamentos da aplicação, provedor de email, provisionamento administrativo, política de sessões, operação de segredos e backup externo com restauração demonstrada. Isolamento, segurança, integridade da agenda, auditoria e recuperação continuam critérios obrigatórios de lançamento.
 
@@ -107,4 +109,3 @@ As branches numeradas de trabalho no GitHub não são branches de banco do Supab
 - [Segurança da API](https://supabase.com/docs/guides/api/securing-your-api)
 - [Integração GitHub oficial](https://supabase.com/docs/guides/deployment/branching/github-integration)
 - [Histórico de migrações](https://supabase.com/docs/reference/cli/supabase-migration-repair)
-

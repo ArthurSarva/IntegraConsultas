@@ -32,6 +32,8 @@ jobs:
         run: node scripts/prepare-web-tests.mjs
       - name: Install test browser
         run: pnpm exec playwright install --with-deps chromium
+      - name: Start guarded local administrator function
+        run: node scripts/start-test-functions.mjs
       - name: Validate web flows and real sessions
         run: pnpm test:web
       - if: always()

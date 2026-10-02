@@ -6,7 +6,7 @@ Aplicação web para agendamento de consultas de múltiplas clínicas, lembretes
 
 Fase de base inicial e documentação. Esta documentação registra os acordos até 02/10/2026; não representa aplicação clínica pronta nem certificação de conformidade com a LGPD.
 
-Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada em 02/10/2026. Base de identidade, clínicas, vínculos e isolamento disponível localmente e no Supabase de desenvolvimento. Base web com login, recuperação de senha, autenticação em duas etapas e seleção de clínica. Módulos de agenda e pacientes ainda não implementados.
+Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada em 02/10/2026. Base de identidade, clínicas, vínculos e isolamento disponível localmente e no Supabase de desenvolvimento. Base web com login, recuperação de senha, autenticação em duas etapas, seleção de clínica e cadastro de clínicas e administradores pelo Dev com convite individual. Módulos de agenda e pacientes ainda não implementados.
 
 ## Desenvolvimento
 
@@ -32,4 +32,3 @@ Consulte [base web e autenticação](docs/base-web.md) para iniciar a aplicaçã
 A agenda oficial pertence ao IntegraConsultas. Cada clínica possui dados e permissões isolados. O início operacional será com uma clínica, mantendo suporte a múltiplas clínicas. Segurança, isolamento, integridade da agenda, auditoria e restauração de backups são condições obrigatórias de lançamento.
 
 Não inserir dados reais de pacientes, senhas, tokens ou credenciais neste repositório.
-

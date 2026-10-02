@@ -1,10 +1,12 @@
 # ADR-005 — Ambientes, hospedagem e recuperação
 
-Status: proposto; fornecedores, orçamento e metas numéricas pendentes.
+Status: Supabase escolhido para banco e autenticação em 02/10/2026. Hospedagem da aplicação/processador, orçamento e metas numéricas pendentes. Ver [ADR-007](007-supabase.md).
 
 ## Recomendação
 
 Desenvolvimento local em contêineres, PostgreSQL e integrações simuladas. Ambiente de teste separado com dados fictícios. Produção com aplicação, processador e PostgreSQL em serviços que atendam aos critérios de lançamento.
+
+Documentar dois projetos Supabase separados: desenvolvimento/testes com dados fictícios e produção, inicialmente no plano gratuito sujeito à comprovação dos critérios de lançamento. Backups externos necessários; ver [limites e recuperação](../supabase.md). Projetos não são um banco por clínica.
 
 Preferir hospedagem gerenciada de baixo custo para reduzir manutenção. Gratuidade é útil para avaliação, mas não supera requisitos de disponibilidade, tarefas, backup, contratos e segurança.
 

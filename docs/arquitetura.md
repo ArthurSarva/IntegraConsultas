@@ -1,13 +1,14 @@
 # Arquitetura proposta
 
-Status: proposta técnica; stack e fornecedores ainda não aprovados definitivamente.
+Status: Supabase (PostgreSQL e Auth) aprovado em 02/10/2026. Demais escolhas técnicas continuam propostas; consultar os registros de decisão.
 
 ## Componentes
 
 | Componente | Proposta |
 |---|---|
 | Aplicação web e servidor | Next.js e TypeScript |
-| Persistência | PostgreSQL gerenciado |
+| Persistência | PostgreSQL gerenciado no Supabase — aprovado |
+| Autenticação | Supabase Auth — aprovado; fluxos a validar |
 | Automação | Processo em segundo plano com tarefas persistidas |
 | Comunicação | API oficial de WhatsApp |
 | Calendário | API oficial do Google Agenda com OAuth |
@@ -23,6 +24,10 @@ Uma aplicação organizada em módulos e um processo de automação no mesmo rep
 4. Processador lê tarefas e verifica versão e situação atual da consulta.
 5. Adaptadores enviam mensagens e sincronizam eventos.
 6. Retornos dos fornecedores atualizam histórico e situação das tarefas.
+
+## Supabase
+
+Uma base compartilhada por clínicas em cada ambiente. Desenvolvimento/testes e produção em projetos separados, conforme [plano de adoção](supabase.md). Isolamento exige autorização e RLS verificadas; a plataforma não implementa automaticamente as permissões do IntegraConsultas. A escolha do fornecedor não aprova custos, lançamento ou esquema físico.
 
 ## Isolamento
 

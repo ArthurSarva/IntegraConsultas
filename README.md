@@ -4,13 +4,17 @@ Aplicação web para agendamento de consultas de múltiplas clínicas, lembretes
 
 ## Estado do projeto
 
-Fase de definição e documentação. Esta documentação registra os acordos até 01/10/2026; não representa funcionalidades implementadas nem certificação de conformidade com a LGPD.
+Fase de definição e documentação. Esta documentação registra os acordos até 02/10/2026; não representa funcionalidades implementadas nem certificação de conformidade com a LGPD.
+
+Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada em 02/10/2026. Projetos e funcionalidades ainda não foram criados.
 
 ## Documentação
 
 - [Requisitos funcionais e permissões](docs/requisitos-funcionais.md)
 - [Modelo de dados proposto](docs/modelo-dados.md)
 - [Arquitetura proposta](docs/arquitetura.md)
+- [Decisões arquiteturais](docs/decisoes-arquiteturais/README.md)
+- [Supabase: ambientes, segurança e recuperação](docs/supabase.md)
 - [Privacidade e segurança](docs/privacidade-seguranca.md)
 - [Qualidade e critérios de lançamento](docs/qualidade-lancamento.md)
 - [Decisões pendentes e execução](docs/decisoes-pendentes.md)

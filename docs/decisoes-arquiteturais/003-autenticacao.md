@@ -1,6 +1,6 @@
 # ADR-003 — Autenticação e autorização
 
-Status: proposto; produto, fluxos e parâmetros pendentes.
+Status: Supabase Auth escolhido em 02/10/2026, conforme [ADR-007](007-supabase.md); fluxos, parâmetros e implementação pendentes.
 
 ## Contexto
 
@@ -8,13 +8,15 @@ Contas individuais, funções por vínculo e médico em várias clínicas. MFA p
 
 ## Recomendação
 
-Preferir provedor de identidade compatível com OpenID Connect, com MFA, recuperação de conta, revogação e registros de autenticação. Usar biblioteca mantida para integração e sessões.
+Usar Supabase Auth para identidade, MFA e recuperação de conta. Validar integração, revogação e registros antes do lançamento. OpenID Connect permanece alternativa de portabilidade, sem exigir outro provedor no início.
 
 Fornecedor gerenciado reduz operação inicial, mas precisa de avaliação de preço, contratos, retenção, portabilidade e transferência internacional. Keycloak é alternativa autogerenciada se houver capacidade de operá-lo; não é escolha automática nem hospedagem gratuita.
 
 A identidade externa apenas identifica o usuário. Funções, clínica, escopo e acesso aos pacientes são resolvidos pelo IntegraConsultas, conforme matriz. Não confiar em função enviada pelo navegador.
 
-Sessão web protegida por cookies HttpOnly e Secure em produção, política SameSite compatível com fluxos, proteção CSRF, verificação de origem, limitação de tentativas e expiração. Revogação de vínculo precisa impedir novas ações mesmo com sessão existente.
+Proposta de sessão com tokens mantidos no servidor e cookie de sessão HttpOnly e Secure no navegador, SameSite compatível com os fluxos, proteção CSRF, verificação de origem, limitação de tentativas e expiração. Validar esse modelo na prova técnica: a integração SSR padrão com cliente Supabase no navegador não garante tokens em cookies HttpOnly. Revogação de vínculo precisa impedir novas ações mesmo com sessão existente.
+
+Permissões persistidas em vínculos controlados pelo sistema, verificadas em cada operação. Não autorizar por user_metadata editável pelo usuário, nem depender exclusivamente de claims antigos do JWT. Exigir MFA para Dev e administradores no servidor e nas políticas pertinentes; método TOTP proposto, recuperação a validar. [Plano de segurança](../supabase.md).
 
 Separar autenticação da aplicação de OAuth do Google Agenda. Não solicitar Google Calendar como requisito para todos entrarem no sistema.
 
@@ -28,7 +30,7 @@ Separar autenticação da aplicação de OAuth do Google Agenda. Não solicitar 
 
 Fornecedor não altera os limites de clínica. Migração de identidades exige mapeamento estável de issuer e subject; email não é identidade imutável. Usuários desligados não devem continuar operando via tokens ou tarefas de exportação.
 
-## Validação antes da escolha
+## Validação antes da implantação
 
 Demonstrar login, MFA, recuperação e revogação com contas fictícias. Avaliar encerramento por inatividade, expiração absoluta, tratamento de conta duplicada, acesso Dev e impossibilidade de autoelevação.
 

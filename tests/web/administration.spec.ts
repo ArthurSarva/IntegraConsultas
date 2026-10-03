@@ -99,6 +99,7 @@ test('Dev creates a clinic, provisions an administrator and accepts one-use invi
  await page.getByLabel('Email do administrador').fill(cancelledEmail);
  await page.getByRole('button',{name:'Cadastrar administrador'}).click();
  await expect(page.getByRole('status')).toContainText('Administrador vinculado');
+ await expect(page.getByLabel('Link do convite')).not.toHaveValue(oldInvite);
  const freshInvite=await page.getByLabel('Link do convite').inputValue();
  expect(freshInvite).not.toBe(oldInvite);
  await expect(pendingRow.getByText('Aguardando aceite do convite',{exact:true})).toBeVisible();

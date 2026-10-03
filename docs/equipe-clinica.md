@@ -14,6 +14,30 @@ Usuários e vínculos inativos não são reativados. A gestão da equipe não al
 
 ## Arquitetura e banco
 
+### Administrador que também atende como médico
+
+Na etapa `015-administrador-medico`, o administrador encontra **Meu perfil na clínica** em **Gerenciar equipe**. Ao marcar **Também sou médico**, escolhe sua duração padrão de 15, 30, 45 ou 60 minutos e ativa o perfil. A mesma identidade e senha são mantidas; esse fluxo não chama o Auth para criar contas, gerar convites ou alterar credenciais.
+
+O vínculo da clínica selecionada passa a ter `administrator/clinic` e `doctor/own`. O administrador conserva a gestão da clínica, e a função médica segue o mesmo perfil dos demais médicos. **Minha agenda** e **Meus pacientes** aparecem no início para o administrador somente quando `doctor` está presente no vínculo da clínica ativa. Esses módulos ainda estão em preparação. Outra clínica exige ativação independente e pode ter duração diferente.
+
+O formulário acrescenta o perfil médico; não oferece remoção de funções, que continua reservada à etapa de gestão de acessos. Após ativar, permite atualizar a duração. Médicos já vinculados pelo cadastro de equipe aparecem com a opção marcada. Dev, recepção e médicos sem administração não usam esse autocadastro.
+
+`api.configure_administrator_doctor` recebe apenas clínica, duração e identificador de operação. O alvo é sempre derivado da sessão. A função privada exige sessão viva, MFA, usuário e vínculo ativos, contexto selecionado e papel administrador atual; usa bloqueios na mesma ordem da gestão da equipe e revalida após obtê-los. Não cria outro vínculo nem modifica funções de outras clínicas. Se houver recepção no vínculo, seu escopo fica `own`, preservando a administração `clinic`.
+
+Perfil, duração e evento `administrator.doctor_configured` são gravados atomicamente. O evento identifica clínica, ator e alvo próprios, sem email, senha ou token. Repetições idênticas não duplicam auditoria; mudança de dados ou acesso revogado impede reutilizar a operação. Clientes continuam sem escrita direta nas tabelas e anônimos sem acesso à RPC.
+
+```mermaid
+flowchart TD
+    A[Administrador com MFA na clínica ativa] --> B[Gerenciar equipe: Meu perfil na clínica]
+    B --> C[Também sou médico e duração padrão]
+    C --> D[Validar sessão e administração no banco]
+    D --> E[Acrescentar doctor/own no próprio vínculo]
+    E --> F[Salvar duração e auditoria na mesma transação]
+    F --> G[Manter administração e mostrar Minha agenda e Meus pacientes]
+```
+
+Testes adicionais verificam ativação e atualização na interface, preservação da senha e administração, módulos condicionais, duas clínicas com durações independentes, ausência de convites, MFA, perfis indevidos, entradas inválidas, idempotência e revogação.
+
 ```mermaid
 flowchart TD
     A[Administrador ou Dev com MFA] --> B[Selecionar clínica]

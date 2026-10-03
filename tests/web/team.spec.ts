@@ -44,6 +44,7 @@ test('clinic administrator invites reception and doctor with own reception, pres
  const receiving=await browser.newContext(),recipient=await receiving.newPage();
  await recipient.goto(receptionInvite);await recipient.getByRole('button',{name:'Aceitar convite'}).click();await expect(recipient).toHaveURL(/\/definir-senha$/);
  await recipient.getByLabel('Nova senha',{exact:true}).fill(f.password);await recipient.getByLabel('Confirmar senha',{exact:true}).fill(f.password);await recipient.getByRole('button',{name:'Salvar senha'}).click();
+ await expect(recipient).toHaveURL(/\/entrar\?senha=atualizada$/);
  await login(recipient,receptionEmail);await expect(recipient).toHaveURL(/\/clinicas$/);await expect(recipient.getByRole('option',{name:'Clínica de teste B',exact:true})).toHaveCount(0);
  await recipient.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);await recipient.getByRole('button',{name:'Acessar clínica'}).click();await expect(recipient.getByText('Recepção',{exact:true})).toBeVisible();
  await recipient.goto('/equipe');await expect(recipient).toHaveURL(/\/inicio$/);await receiving.close();
@@ -59,7 +60,7 @@ test('clinic administrator invites reception and doctor with own reception, pres
  expect((await client.rpc('link_team_member',linked)).error).toBeNull();expect((await client.rpc('link_team_member',linked)).error).toBeNull();
  expect((await client.rpc('link_team_member',{...linked,team_role:'administrator'})).error?.code).toBe('22023');
  const docContext=await browser.newContext(),doc=await docContext.newPage();await doc.goto(doctorInvite);await doc.getByRole('button',{name:'Aceitar convite'}).click();await expect(doc).toHaveURL(/\/definir-senha$/);
- await doc.getByLabel('Nova senha',{exact:true}).fill(f.password);await doc.getByLabel('Confirmar senha',{exact:true}).fill(f.password);await doc.getByRole('button',{name:'Salvar senha'}).click();await login(doc,doctorEmail);
+ await doc.getByLabel('Nova senha',{exact:true}).fill(f.password);await doc.getByLabel('Confirmar senha',{exact:true}).fill(f.password);await doc.getByRole('button',{name:'Salvar senha'}).click();await expect(doc).toHaveURL(/\/entrar\?senha=atualizada$/);await login(doc,doctorEmail);
  await doc.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);await doc.getByRole('button',{name:'Acessar clínica'}).click();await expect(doc.getByText('Médico e recepção',{exact:true})).toBeVisible();await expect(doc.getByText(/limitada à sua própria agenda/)).toBeVisible();
  const doctorClient=createClient(f.url,f.key,{db:{schema:'api'},global:{headers:{Authorization:'Bearer '+await jwt(docContext)}},auth:{persistSession:false,autoRefreshToken:false}});
  const workspace=(await doctorClient.rpc('workspace')).data;

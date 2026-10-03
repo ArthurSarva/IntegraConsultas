@@ -25,7 +25,7 @@ test('reception registers, searches and edits patients with validation, duplicat
  await login(page,f.users.receptionA.email);await page.getByRole('link',{name:'Abrir pacientes',exact:true}).click();
  await page.getByRole('link',{name:'Cadastrar paciente',exact:true}).click();
  await fill(page,name,'(11) 99999-0102','000.000.001-92');await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();
- await expect(page.getByRole('alert')).toContainText('CPF válido');await expect(page.getByLabel('Nome completo')).toHaveValue(name);
+ await expect(page.getByRole('alert').filter({hasText:'CPF válido'})).toContainText('CPF válido');await expect(page.getByLabel('Nome completo')).toHaveValue(name);
  await page.getByLabel('CPF (opcional)').fill('000.000.001-91');await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();
  await expect(page).toHaveURL(/\/pacientes\/[0-9a-f-]{36}\?salvo=1$/);await expect(page.getByRole('status')).toContainText('Cadastro salvo');
  await expect(page.getByLabel('Telefone / WhatsApp')).toHaveValue('+5511999990102');await expect(page.getByLabel('CPF (opcional)')).toHaveValue('00000000191');
@@ -36,10 +36,10 @@ test('reception registers, searches and edits patients with validation, duplicat
  const duplicate=page.getByRole('region',{name:'Possíveis cadastros duplicados'});await expect(duplicate).toBeVisible();await expect(page.getByLabel('Nome completo')).toHaveValue(family);await expect(page.getByLabel('Telefone / WhatsApp')).toHaveValue('11999990102');
  await page.getByLabel('Nome completo').fill(family+' novo');await expect(duplicate).toHaveCount(0);await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();await expect(duplicate).toBeVisible();
  await page.getByLabel('Conferi os cadastros e quero salvar mesmo assim').check();await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();await expect(page).toHaveURL(/\/pacientes\/[0-9a-f-]{36}\?salvo=1$/);
- await page.goto('/pacientes/novo');await fill(page,'Outro CPF fictício','11999990103','00000000191');await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Já existe um paciente com esse CPF');
+ await page.goto('/pacientes/novo');await fill(page,'Outro CPF fictício','11999990103','00000000191');await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();await expect(page.getByRole('alert').filter({hasText:'Já existe um paciente com esse CPF'})).toContainText('Já existe um paciente com esse CPF');
  await page.goto('/pacientes/'+id);const secondContext=await browser.newContext(),second=await secondContext.newPage();await login(second,f.users.receptionA.email);await second.goto('/pacientes/'+id);
  await page.getByLabel('Nome completo').fill(name+' atualizado');await page.getByRole('button',{name:'Salvar alterações',exact:true}).click();await expect(page.getByRole('status')).toContainText('Cadastro salvo');
- await second.getByLabel('Nome completo').fill(name+' edição antiga');await second.getByRole('button',{name:'Salvar alterações',exact:true}).click();await expect(second.getByRole('alert')).toContainText('alterado por outra pessoa');await expect(second.getByRole('button',{name:'Salvar alterações'})).toBeDisabled();
+ await second.getByLabel('Nome completo').fill(name+' edição antiga');await second.getByRole('button',{name:'Salvar alterações',exact:true}).click();await expect(second.getByRole('alert').filter({hasText:'alterado por outra pessoa'})).toContainText('alterado por outra pessoa');await expect(second.getByRole('button',{name:'Salvar alterações'})).toBeDisabled();
  await second.getByRole('link',{name:'Atualizar cadastro',exact:true}).click();await expect(second.getByLabel('Nome completo')).toHaveValue(name+' atualizado');await secondContext.close();
  const a=await api('receptionA'),b=await api('receptionB',f.clinics.b);
  expect((await b.rpc('get_patient',{clinic_id:f.clinics.b,patient_id:id,own_only:false})).data).toBeNull();

@@ -7,7 +7,7 @@ export function AdministratorDoctorForm({clinicId,operation,isDoctor,duration}:{
  const [checked,setChecked]=useState(isDoctor);
  return <form action={action} className="form">
   <input type="hidden" name="clinic" value={clinicId}/><input type="hidden" name="operation" value={operation}/>
-  <label className="checkbox-label"><input name="doctor" type="checkbox" checked={isDoctor||checked} disabled={pending||isDoctor} onChange={e=>setChecked(e.target.checked)}/>Também sou médico</label>
+  <label className="checkbox-label"><input key={isDoctor?'active':'inactive'} name="doctor" type="checkbox" checked={isDoctor||checked} disabled={pending||isDoctor} onChange={e=>setChecked(e.target.checked)}/>Também sou médico</label>
   {isDoctor&&<input type="hidden" name="doctor" value="on"/>}
   <p className="field-help">Você mantém a administração da clínica e passa a ter também o perfil de médico, com sua própria agenda e pacientes. Usa a mesma conta e senha.</p>
   {(isDoctor||checked)&&<><label htmlFor="administrator-duration">Minha duração padrão de consulta</label><select key={duration} id="administrator-duration" name="duration" defaultValue={duration} disabled={pending}>{[15,30,45,60].map(n=><option key={n} value={n}>{n} minutos</option>)}</select></>}

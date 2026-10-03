@@ -2,6 +2,10 @@
 
 Status: especificação documental para revisão. Consolida os [requisitos funcionais](requisitos-funcionais.md) e o [modelo de dados](modelo-dados.md); não implementa autorização.
 
+## Implementações atuais
+
+A matriz abaixo preserva a especificação inicial e as pendências. As entregas `014` e `015` detalham gestão de equipe e administrador médico em [equipe da clínica](equipe-clinica.md). A entrega `016` implementa [cadastro de pacientes](cadastro-pacientes.md): recepção da clínica e administrador cadastram e editam; Dev isolado consulta na clínica selecionada; médico consulta vínculos próprios; médico com recepção cadastra paciente próprio e edita somente cadastro não compartilhado. Edição compartilhada permanece restrita à recepção da clínica e administração, sem conceder edição ampla aos médicos. Minha agenda e Meus pacientes do administrador aparecem somente quando sua função médica está ativa naquele vínculo. O módulo pessoal de pacientes filtra vínculos próprios mesmo para o administrador médico; a administração mantém sua lista da clínica.
+
 ## 1. Legenda
 
 - **Clínica**: permitido somente dentro da clínica ativa e do vínculo autorizado.
@@ -184,3 +188,4 @@ Estes são cenários de testes futuros, não testes já executados.
 - Política de exportação, retenção e incidentes.
 
 A implementação deverá resolver as pendências ou manter a respectiva ação negada. A matriz não cria permissões implicitamente.
+

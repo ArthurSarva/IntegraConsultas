@@ -241,3 +241,52 @@ select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-00000000
 set local role authenticated;
 select pg_temp.assert_error($test$select api.cancel_administrator_invitation(current_setting('test.created_clinic')::uuid,'10000000-0000-4000-8000-000000000008','50000000-0000-4000-8000-000000000010')$test$,'42501','Administrador não cancela convite Dev');
 reset role;
+-- Team provisioning is scoped, audited and never grants privileged roles.
+reset role;
+update auth.sessions set not_after=now()+interval '1 day' where id='40000000-0000-4000-8000-000000000004';
+insert into auth.users(id,email,email_confirmed_at) values
+ ('10000000-0000-4000-8000-000000000010','new-doctor@example.invalid',null),
+ ('10000000-0000-4000-8000-000000000011','new-reception@example.invalid',now());
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000003","session_id":"40000000-0000-4000-8000-000000000003","aal":"aal1","role":"authenticated"}',true);
+set local role authenticated;
+select pg_temp.assert_error($test$select api.team_clinic_context('20000000-0000-4000-8000-000000000001')$test$,'42501','Gestão de equipe exige MFA');
+reset role;
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000003","session_id":"40000000-0000-4000-8000-000000000003","aal":"aal2","role":"authenticated"}',true);
+set local role authenticated;
+select api.select_clinic('20000000-0000-4000-8000-000000000001');
+select pg_temp.assert_true(api.team_clinic_context('20000000-0000-4000-8000-000000000001')=api.current_clinic(),'Administrador gerencia equipe na própria clínica');
+select pg_temp.assert_error($test$select api.team_candidate('20000000-0000-4000-8000-000000000002','new-doctor@example.invalid')$test$,'42501','Outra clínica não permite pesquisar conta');
+select pg_temp.assert_error($test$select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000010','new-doctor@example.invalid','Médico','administrator',false,null,'60000000-0000-4000-8000-000000000001')$test$,'22023','Equipe não concede administrador');
+select pg_temp.assert_error($test$select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000010','new-doctor@example.invalid','Médico','doctor',true,20,'60000000-0000-4000-8000-000000000001')$test$,'22023','Duração fora das opções recusada');
+select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000010','new-doctor@example.invalid','Médico novo','doctor',true,45,'60000000-0000-4000-8000-000000000001');
+select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000010','new-doctor@example.invalid','Médico novo','doctor',true,45,'60000000-0000-4000-8000-000000000001');
+select pg_temp.assert_error($test$select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000010','new-doctor@example.invalid','Médico novo','doctor',true,60,'60000000-0000-4000-8000-000000000001')$test$,'42501','Operação repetida com outros dados recusada');
+select pg_temp.assert_true((select duration_minutes=45 and not confirmed from api.list_team() where id='10000000-0000-4000-8000-000000000010'),'Lista mostra duração e convite pendente');
+select pg_temp.assert_true((select count(*)=2 and bool_and(scope='own') from app.membership_roles where membership_id=(select id from app.memberships where user_id='10000000-0000-4000-8000-000000000010' and clinic_id=api.current_clinic())),'Médico com recepção somente própria agenda');
+select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000011','new-reception@example.invalid','Recepção nova','reception',false,null,'60000000-0000-4000-8000-000000000002');
+select pg_temp.assert_true((select count(*)=1 and bool_and(role='reception' and scope='clinic') from app.membership_roles where membership_id=(select id from app.memberships where user_id='10000000-0000-4000-8000-000000000011' and clinic_id=api.current_clinic())),'Recepção comum recebe somente papel de recepção da clínica');
+select pg_temp.assert_error($test$select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000009','inactive@example.invalid','Inativo','reception',false,null,'60000000-0000-4000-8000-000000000003')$test$,'42501','Equipe não reativa conta inativa');
+select pg_temp.assert_error($test$select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000005','fixture5@example.invalid','Dev','doctor',false,30,'60000000-0000-4000-8000-000000000003')$test$,'42501','Administrador não altera identidade Dev');
+select pg_temp.assert_error($test$insert into app.doctor_settings(clinic_id,membership_id,default_duration_minutes) values('20000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000004',30)$test$,'42501','Escrita direta de duração negada');
+-- Adding doctor to an existing reception narrows that same membership only.
+select api.link_team_member('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000011','new-reception@example.invalid','Nome não substitui cadastro global','doctor',false,15,'60000000-0000-4000-8000-000000000004');
+select pg_temp.assert_true((select bool_and(scope='own') from app.membership_roles where membership_id=(select id from app.memberships where user_id='10000000-0000-4000-8000-000000000011' and clinic_id=api.current_clinic())),'Conversão para médico restringe recepção existente');
+reset role;
+select pg_temp.assert_true((select display_name='Recepção nova' and not is_dev from app.users where id='10000000-0000-4000-8000-000000000011'),'Nome global preservado sem elevação Dev');
+select pg_temp.assert_true((select count(*)=1 from audit.events where request_id='60000000-0000-4000-8000-000000000001'),'Cadastro repetido não duplica auditoria');
+select pg_temp.assert_true((select count(*)=0 from app.membership_roles where clinic_id='20000000-0000-4000-8000-000000000001' and role='administrator' and membership_id in(select id from app.memberships where user_id in('10000000-0000-4000-8000-000000000010','10000000-0000-4000-8000-000000000011'))),'Novas pessoas não recebem administração');
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000004","session_id":"40000000-0000-4000-8000-000000000004","aal":"aal2","role":"authenticated","user_metadata":{"is_dev":true}}',true);
+set local role authenticated;
+select api.select_clinic('20000000-0000-4000-8000-000000000001');
+select pg_temp.assert_error($test$select api.list_team()$test$,'42501','Médico com recepção não gerencia equipe nem por metadata');
+select pg_temp.assert_true((select count(*)=0 from app.doctor_settings),'Médico não lê duração de outros médicos');
+reset role;
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000005","session_id":"40000000-0000-4000-8000-000000000005","aal":"aal2","role":"authenticated"}',true);
+set local role authenticated;
+select api.select_clinic('20000000-0000-4000-8000-000000000002');
+select pg_temp.assert_true((select count(*)=0 from api.list_team() where id in('10000000-0000-4000-8000-000000000010','10000000-0000-4000-8000-000000000011')),'Dev lê equipe somente da clínica selecionada');
+select api.link_team_member('20000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000010','new-doctor@example.invalid','Médico novo','doctor',false,60,'60000000-0000-4000-8000-000000000005');
+reset role;
+select pg_temp.assert_true((select count(*)=2 from app.doctor_settings d join app.memberships m on m.id=d.membership_id where m.user_id='10000000-0000-4000-8000-000000000010'),'Mesmo médico pode ter configurações por clínica');
+select pg_temp.assert_true((select default_duration_minutes=45 from app.doctor_settings where clinic_id='20000000-0000-4000-8000-000000000001' and membership_id=(select id from app.memberships where user_id='10000000-0000-4000-8000-000000000010' and clinic_id='20000000-0000-4000-8000-000000000001')),'Vínculo em outra clínica não altera duração original');
+select pg_temp.assert_true((select count(*)=0 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('api','private') and has_function_privilege('anon',p.oid,'EXECUTE')),'Novas funções de equipe negadas ao anônimo');

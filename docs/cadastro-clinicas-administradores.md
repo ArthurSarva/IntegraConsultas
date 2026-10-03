@@ -49,3 +49,13 @@ Auth e concessão de acesso pertencem a operações distintas: uma falha depois 
 Os testes utilizam contas fictícias e Supabase local descartável. Cobrem isolamento, Dev com MFA, clínica selecionada, repetição de operações, conta inativa, convite, senha definida pelo destinatário, rejeição de convite já usado, preservação da senha de conta existente e rejeição de chamadas anônimas ou feitas pela recepção. Não criam clínicas ou administradores reais no ambiente hospedado.
 
 A função verifica a autorização internamente; `verify_jwt=false` desliga apenas a verificação automática do gateway, não permite acesso anônimo ao cadastro. Falhas retornam mensagens genéricas. Logs de argumentos de ações e requisições do Next em desenvolvimento ficam desativados. Na hospedagem, manter também a ocultação de segredos nos logs da plataforma e proxies.
+
+## Cancelamento de convite
+
+Na lista de administradores, o Dev pode cancelar um convite pendente da clínica selecionada. O botão aparece ao lado do status; contas confirmadas não apresentam essa ação. O sistema retira apenas o papel de administrador daquela clínica, mantém a identidade e os vínculos em outras clínicas e registra `administrator.invitation_cancelled` na auditoria. Repetir uma operação não duplica o evento. Repetir uma operação antiga depois de emitir novo convite é recusado.
+
+A função de autenticação substitui o token pendente por outro que é descartado, sem enviar email. Só apresenta “Convite cancelado” após verificar no banco que o token foi substituído ou já consumido. Se o Auth falhar, o acesso permanece cancelado e a lista oferece “Concluir cancelamento”. O fingerprint privado permite verificar a substituição sem guardar o token original. A tabela privada tem RLS e nenhuma permissão direta de leitura ou escrita para clientes.
+
+O token de convite pertence à conta Auth, portanto invalidar o link também invalida links pendentes da mesma conta que tenham sido entregues em outro contexto. Os papéis e vínculos das outras clínicas são preservados. Contas confirmadas e suas senhas não são alteradas. Para emitir um novo convite depois do cancelamento, repetir explicitamente o cadastro; não reutilizar a operação anterior.
+
+Os testes verificam cancelamento, auditoria única, proteção contra replay, isolamento, preservação de vínculos e recusa de cancelamento de conta confirmada. A suíte com Supabase descartável também verifica pelo Auth que o token antigo foi invalidado e que um convite novo funciona. Nenhum convite real é cancelado pelos testes.

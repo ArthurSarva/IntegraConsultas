@@ -21,6 +21,28 @@ Deno.serve(async(req:Request)=>{
   if(verified.error||!verified.data.user)return reply(401,'Acesso indisponível.');
   const body=await payload(req);
   const clinic=String(body.clinic_id??''),operation=String(body.operation_id??'');
+  if(body.action==='cancel'){
+   const userId=String(body.user_id??'');
+   if(!uuid.test(clinic)||!uuid.test(operation)||!uuid.test(userId))return reply(400,'Confira o convite e a clínica.');
+   const cancelled=await userClient.rpc('cancel_administrator_invitation',{clinic_id:clinic,user_id:userId,operation_id:operation});
+   if(cancelled.error)return reply(403,'Não foi possível cancelar este convite.');
+   if(!cancelled.data.invalidated&&!cancelled.data.confirmed){
+    const admin=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
+    const current=await admin.auth.admin.getUserById(userId);
+    if(current.error)return reply(409,'Acesso cancelado. Tente novamente para concluir a invalidação do link.');
+    if(!current.data.user.email_confirmed_at){
+     // Rotate the pending Auth invite token and discard the replacement. No email is sent.
+     const rotated=await admin.auth.admin.generateLink({type:'invite',email:cancelled.data.email});
+     if(rotated.error){
+      const latest=await admin.auth.admin.getUserById(userId);
+      if(latest.error||!latest.data.user.email_confirmed_at)return reply(409,'Acesso cancelado. Tente novamente para concluir a invalidação do link.');
+     }
+    }
+   }
+   const completed=await userClient.rpc('complete_invitation_cancellation',{clinic_id:clinic,user_id:userId});
+   if(completed.error)return reply(409,'Atualize a página e conclua o cancelamento.');
+   return reply(200,'Convite cancelado.');
+  }
   const email=String(body.email??'').trim().toLowerCase(),name=String(body.display_name??'').trim();
   if(!uuid.test(clinic)||!uuid.test(operation)||name.length<1||name.length>120||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return reply(400,'Confira nome, email e clínica.');
   const guard=await userClient.rpc('dev_clinic_context',{clinic_id:clinic});
@@ -43,4 +65,3 @@ Deno.serve(async(req:Request)=>{
   return reply(200,hash?'Administrador vinculado. Entregue o convite somente ao destinatário.':'Conta existente vinculada. O administrador pode usar sua senha atual.',hash?{invite_hash:hash}:{});
  }catch{return reply(400,'Não foi possível concluir o cadastro. Tente novamente.');}
 });
-

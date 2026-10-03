@@ -79,3 +79,45 @@ test('team function refuses anonymous and doctor with reception before provision
  expect((await fetch(endpoint,{method:'POST',headers:{apikey:f.key,Authorization:'Bearer '+result.data.session!.access_token,'Content-Type':'application/json'},body:JSON.stringify(body)})).status).toBe(403);
  const admin=createClient(f.url,f.adminKey,{auth:{persistSession:false,autoRefreshToken:false}});expect((await admin.auth.admin.listUsers({page:1,perPage:1000})).data.users.some(u=>u.email===email)).toBe(false);
 });
+
+test('administrator enables own doctor profile, keeps administration and only shows own modules in configured clinic',async({page})=>{
+ test.setTimeout(120000);
+ const admin=createClient(f.url,f.adminKey,{auth:{persistSession:false,autoRefreshToken:false}});
+ const email='administrator-doctor-'+randomUUID()+'@example.invalid';
+ const created=await admin.auth.admin.createUser({email,password:f.password,email_confirm:true});expect(created.error).toBeNull();
+ const id=created.data.user!.id,membershipA=randomUUID(),membershipB=randomUUID();
+ sql(`do $self_fixture$ begin
+ insert into app.users(id,display_name) values('${id}','Administrador médico de teste');
+ insert into app.memberships(id,clinic_id,user_id) values('${membershipA}','${f.clinics.a}','${id}'),('${membershipB}','${f.clinics.b}','${id}');
+ insert into app.membership_roles(clinic_id,membership_id,role,scope) values('${f.clinics.a}','${membershipA}','administrator','clinic'),('${f.clinics.b}','${membershipB}','administrator','clinic');
+ end $self_fixture$;`);
+ await login(page,email);await setupMfa(page);
+ await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);await page.getByRole('button',{name:'Acessar clínica'}).click();
+ await expect(page.getByRole('heading',{name:'Minha agenda',exact:true})).toHaveCount(0);await expect(page.getByRole('heading',{name:'Meus pacientes',exact:true})).toHaveCount(0);
+ await page.getByRole('link',{name:'Gerenciar equipe',exact:true}).click();
+ const own=page.getByRole('heading',{name:'Meu perfil na clínica',exact:true}).locator('..');
+ await expect(own.getByLabel('Também sou médico')).not.toBeChecked();await expect(own.getByRole('button',{name:'Ativar meu perfil de médico'})).toBeDisabled();
+ await own.getByLabel('Também sou médico').check();
+ await expect(own.getByLabel('Minha duração padrão de consulta').locator('option')).toHaveText(['15 minutos','30 minutos','45 minutos','60 minutos']);
+ await own.getByLabel('Minha duração padrão de consulta').selectOption('45');await own.getByRole('button',{name:'Ativar meu perfil de médico'}).click();
+ await expect(own.getByRole('status')).toContainText('Seu acesso administrativo foi mantido');
+ await expect(own.getByLabel('Também sou médico')).toBeChecked();await expect(own.getByLabel('Também sou médico')).toBeDisabled();
+ await expect(page.getByLabel('Link do convite')).toHaveCount(0);
+ const selfRow=page.locator('li').filter({hasText:email});await expect(selfRow.getByText('Duração padrão: 45 minutos',{exact:true})).toBeVisible();
+ await own.getByLabel('Minha duração padrão de consulta').selectOption('60');await own.getByRole('button',{name:'Salvar minha duração'}).click();
+ await expect(selfRow.getByText('Duração padrão: 60 minutos',{exact:true})).toBeVisible();
+ const client=createClient(f.url,f.key,{db:{schema:'api'},global:{headers:{Authorization:'Bearer '+await jwt(page.context())}},auth:{persistSession:false,autoRefreshToken:false}});
+ expect((await client.rpc('workspace')).data.roles).toEqual(expect.arrayContaining([{role:'administrator',scope:'clinic'},{role:'doctor',scope:'own'}]));
+ await page.getByRole('link',{name:'Voltar ao início'}).click();await expect(page.getByText('Administrador de clínica e médico',{exact:true})).toBeVisible();
+ for(const name of ['Minha agenda','Meus pacientes','Gestão da clínica','Auditoria'])await expect(page.getByRole('heading',{name,exact:true})).toBeVisible();
+ await page.getByRole('link',{name:'Trocar clínica'}).click();await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.b);await page.getByRole('button',{name:'Acessar clínica'}).click();
+ await expect(page.getByRole('heading',{name:'Minha agenda',exact:true})).toHaveCount(0);await expect(page.getByRole('heading',{name:'Meus pacientes',exact:true})).toHaveCount(0);
+ await page.getByRole('link',{name:'Gerenciar equipe',exact:true}).click();await expect(own.getByLabel('Também sou médico')).not.toBeChecked();
+ expect((await client.rpc('configure_administrator_doctor',{clinic_id:f.clinics.a,duration_minutes:15,operation_id:randomUUID()})).error?.code).toBe('42501');
+ await own.getByLabel('Também sou médico').check();await own.getByLabel('Minha duração padrão de consulta').selectOption('15');await own.getByRole('button',{name:'Ativar meu perfil de médico'}).click();
+ await expect(own.getByRole('status')).toContainText('Seu acesso administrativo foi mantido');
+ await page.getByRole('link',{name:'Voltar ao início'}).click();await expect(page.getByRole('heading',{name:'Minha agenda',exact:true})).toBeVisible();
+ await page.getByRole('link',{name:'Trocar clínica'}).click();await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);await page.getByRole('button',{name:'Acessar clínica'}).click();
+ await page.getByRole('link',{name:'Gerenciar equipe',exact:true}).click();await expect(own.getByLabel('Minha duração padrão de consulta')).toHaveValue('60');
+ expect((await createClient(f.url,f.key).auth.signInWithPassword({email,password:f.password})).error).toBeNull();
+});

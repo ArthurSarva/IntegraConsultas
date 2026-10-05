@@ -189,3 +189,10 @@ Estes são cenários de testes futuros, não testes já executados.
 
 A implementação deverá resolver as pendências ou manter a respectiva ação negada. A matriz não cria permissões implicitamente.
 
+## 11. Regras implementadas da agenda — etapa 019
+
+As pendências acima representam a matriz inicial. Para a agenda interna, recepção e administração podem criar, confirmar, reagendar e cancelar consultas e administrar horários e bloqueios na clínica selecionada. Médico com recepção executa essas operações somente na própria agenda; médico sem recepção possui leitura e alteração da própria duração padrão. Dev possui leitura no contexto selecionado.
+
+Exceções de duração são escolhidas pelo próprio médico ao agendar. Recepção e administração usam o padrão do profissional e preservam a duração registrada ao reagendar. Agendada e confirmada ocupam a vaga; concluída e falta exigem término da consulta, e estados encerrados preservam seu histórico. As verificações de isolamento, concorrência, substituição e ocupação foram incorporadas aos testes da etapa 019.
+
+Veja [agenda interna e consultas](agenda-consultas.md) para regras, estrutura e limites. As regras de integrações, exportação e incidentes continuam nas etapas correspondentes.

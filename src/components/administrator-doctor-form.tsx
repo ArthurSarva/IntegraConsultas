@@ -8,7 +8,7 @@ export function AdministratorDoctorForm({clinicId,operation,isDoctor,duration}:{
  useEffect(()=>setChecked(isDoctor),[isDoctor]);
  return <form action={action} className="form">
   <input type="hidden" name="clinic" value={clinicId}/><input type="hidden" name="operation" value={operation}/>
-  <label className="checkbox-label"><input name="doctor" type="checkbox" checked={checked} disabled={pending} onChange={e=>setChecked(e.target.checked)}/>Também sou médico</label>
+  <label className="checkbox-label"><input key={isDoctor?'active':'inactive'} name="doctor" type="checkbox" checked={checked} disabled={pending} onChange={e=>setChecked(e.target.checked)}/>Também sou médico</label>
   <p className="field-help">Você mantém a administração da clínica e passa a ter também o perfil de médico, com sua própria agenda e pacientes. Usa a mesma conta e senha.</p>
   {checked&&<><label htmlFor="administrator-duration">Minha duração padrão de consulta</label><select key={duration} id="administrator-duration" name="duration" defaultValue={duration} disabled={pending}>{[15,30,45,60].map(n=><option key={n} value={n}>{n} minutos</option>)}</select></>}
   {isDoctor&&!checked&&<p className="field-help">Ao salvar, seu perfil de médico será desativado somente nesta clínica. Seu acesso administrativo e o histórico serão mantidos.</p>}

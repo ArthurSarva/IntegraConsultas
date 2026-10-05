@@ -20,7 +20,9 @@ Na etapa `015-administrador-medico`, o administrador encontra **Meu perfil na cl
 
 O vínculo da clínica selecionada passa a ter `administrator/clinic` e `doctor/own`. O administrador conserva a gestão da clínica, e a função médica segue o mesmo perfil dos demais médicos. **Minha agenda** e **Meus pacientes** aparecem no início para o administrador somente quando `doctor` está presente no vínculo da clínica ativa. Esses módulos ainda estão em preparação. Outra clínica exige ativação independente e pode ter duração diferente.
 
-O formulário acrescenta o perfil médico; não oferece remoção de funções, que continua reservada à etapa de gestão de acessos. Após ativar, permite atualizar a duração. Médicos já vinculados pelo cadastro de equipe aparecem com a opção marcada. Dev, recepção e médicos sem administração não usam esse autocadastro.
+Na etapa `018-desativar-perfil-medico-administrador`, a opção **Também sou médico** pode ser marcada ou desmarcada. Após ativar, permite atualizar a duração. Ao desmarcar, o botão **Desativar meu perfil de médico** salva a retirada somente de `doctor/own` do próprio vínculo na clínica selecionada. **Minha agenda** e **Meus pacientes** deixam de aparecer; acesso direto à rota de pacientes próprios também é recusado. A administração, conta, senha, MFA, configuração de duração, vínculos históricos com pacientes e funções em outras clínicas são preservados. Se houver recepção, seu escopo atual é mantido. Médicos já vinculados pelo cadastro de equipe aparecem com a opção marcada. Dev, recepção e médicos sem administração não usam esse autocadastro. A opção pode ser ativada novamente, escolhendo a duração desejada.
+
+`api.disable_administrator_doctor` recebe clínica e identificador de operação; o alvo é derivado da sessão. Exige sessão viva, MFA, usuário e vínculo ativos e administração atual, revalidando após os mesmos bloqueios usados na ativação. Remove apenas o papel médico e grava `administrator.doctor_disabled` na mesma transação. Repetições idênticas não duplicam auditoria; um pedido antigo não desativa um perfil que foi reativado posteriormente. Clientes continuam sem escrita direta nas tabelas. Não apaga pacientes, configurações ou histórico, nem desativa o vínculo administrativo.
 
 `api.configure_administrator_doctor` recebe apenas clínica, duração e identificador de operação. O alvo é sempre derivado da sessão. A função privada exige sessão viva, MFA, usuário e vínculo ativos, contexto selecionado e papel administrador atual; usa bloqueios na mesma ordem da gestão da equipe e revalida após obtê-los. Não cria outro vínculo nem modifica funções de outras clínicas. Se houver recepção no vínculo, seu escopo fica `own`, preservando a administração `clinic`.
 
@@ -31,12 +33,15 @@ flowchart TD
     A[Administrador com MFA na clínica ativa] --> B[Gerenciar equipe: Meu perfil na clínica]
     B --> C[Também sou médico e duração padrão]
     C --> D[Validar sessão e administração no banco]
-    D --> E[Acrescentar doctor/own no próprio vínculo]
+    D --> X{Opção marcada?}
+    X -->|Sim| E[Acrescentar doctor/own no próprio vínculo]
+    X -->|Não| H[Retirar somente doctor/own e auditar]
+    H --> I[Manter administração e histórico; ocultar módulos próprios]
     E --> F[Salvar duração e auditoria na mesma transação]
     F --> G[Manter administração e mostrar Minha agenda e Meus pacientes]
 ```
 
-Testes adicionais verificam ativação e atualização na interface, preservação da senha e administração, módulos condicionais, duas clínicas com durações independentes, ausência de convites, MFA, perfis indevidos, entradas inválidas, idempotência e revogação.
+Testes adicionais verificam ativação, atualização, desativação e reativação na interface, preservação da senha e administração, módulos condicionais, bloqueio da rota pessoal após desativar, duas clínicas com durações independentes, vínculos históricos preservados, ausência de convites, MFA, perfis indevidos, entradas inválidas, idempotência e revogação.
 
 ```mermaid
 flowchart TD

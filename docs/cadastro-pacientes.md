@@ -2,6 +2,8 @@
 
 A etapa `016-cadastro-pacientes` implementa cadastro, pesquisa, consulta e edição dos dados mínimos do paciente. Agenda, prontuário, responsáveis, exportação e envio de mensagens não fazem parte desta entrega.
 
+A etapa seguinte acrescenta [exclusão e arquivamento de pacientes](exclusao-e-remocao.md), com confirmação, versão e preservação de referências de auditoria. As regras abaixo descrevem o cadastro de pacientes ativos.
+
 ## Dados e validação
 
 Nome completo, data de nascimento e telefone/WhatsApp são obrigatórios. Email e CPF são opcionais. O nome é aparado e os espaços são normalizados; buscas por nome ignoram maiúsculas e os acentos portugueses mais comuns. Nascimento deve ser uma data válida, não futura no fuso da clínica. Telefone é guardado em formato internacional: números brasileiros de 10 ou 11 dígitos sem `+` recebem `55`; números internacionais usam `+` e código do país. Validar formato não comprova titularidade, existência do número ou disponibilidade do WhatsApp.

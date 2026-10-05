@@ -6,11 +6,14 @@ export async function configureAdministratorDoctor(_state:FormState,data:FormDat
  if(profile.is_dev||!clinic.roles.some(r=>r.role==='administrator'))return {error:'Esta opção é exclusiva do administrador da clínica.'};
  if(String(data.get('clinic')??'')!==clinic.id)return {error:'A clínica ativa mudou. Atualize a página antes de continuar.'};
  const duration=Number(data.get('duration'));
- if(data.get('doctor')!=='on'||![15,30,45,60].includes(duration))return {error:'Selecione o perfil de médico e uma duração válida.'};
- const result=await client.rpc('configure_administrator_doctor',{clinic_id:clinic.id,duration_minutes:duration,operation_id:String(data.get('operation')??'')});
+ const enabled=data.get('doctor')==='on',operation=String(data.get('operation')??'');
+ if((enabled&&![15,30,45,60].includes(duration))||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(operation))return {error:'Confira o perfil de médico e a duração selecionada.'};
+ const result=enabled
+  ?await client.rpc('configure_administrator_doctor',{clinic_id:clinic.id,duration_minutes:duration,operation_id:operation})
+  :await client.rpc('disable_administrator_doctor',{clinic_id:clinic.id,operation_id:operation});
  if(result.error)return {error:'Não foi possível salvar. Confira sua clínica ativa e tente novamente.'};
- revalidatePath('/equipe');revalidatePath('/inicio');
- return {message:'Perfil de médico e duração salvos nesta clínica. Seu acesso administrativo foi mantido.'};
+ revalidatePath('/equipe');revalidatePath('/inicio');revalidatePath('/meus-pacientes');
+ return {message:enabled?'Perfil de médico e duração salvos nesta clínica. Seu acesso administrativo foi mantido.':'Perfil de médico desativado nesta clínica. Seu acesso administrativo foi mantido.'};
 }
 export async function provisionTeamMember(_state:FormState,data:FormData):Promise<FormState>{
  const {client,clinic}=await teamWorkspace();

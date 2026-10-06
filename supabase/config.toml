@@ -4,6 +4,10 @@
 # working directory name when running `supabase init`.
 project_id = "IntegraConsultas"
 
+[functions.google-sync]
+# Constant-time custom worker secret; user JWTs and public API keys are rejected.
+verify_jwt = false
+
 [functions.provision-administrator]
 # Custom Auth getUser + DB session/Dev/aal2/context checks are enforced in the function.
 verify_jwt = false

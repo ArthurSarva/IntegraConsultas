@@ -3,6 +3,7 @@ import {redirect} from 'next/navigation';
 import {revalidatePath} from 'next/cache';
 import {agendaWorkspace,uuid} from '@/lib/agenda';
 import type {FormState} from '@/components/form';
+import {checkGoogleBooking} from '@/lib/google-booking';
 const localTime=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 function version(data:FormData){const value=Number(data.get('version'));return Number.isInteger(value)&&value>0?value:null;}
 async function context(data:FormData){
@@ -24,9 +25,12 @@ export async function saveAppointment(_state:FormState,data:FormData):Promise<Fo
  const replacementVersion=replace?Number(data.get('replacement_version')):null;
  if(!uuid.test(doctor)||!uuid.test(patient)||!localTime.test(start)||![15,30,45,60].includes(duration)
   ||(appointment&&(!uuid.test(appointment)||!version(data)))||(replace&&(!uuid.test(replace)||!Number.isInteger(replacementVersion)||(replacementVersion??0)<1)))return {error:'Confira paciente, médico, horário, duração e a consulta que deseja substituir.'};
+ const google=await checkGoogleBooking(ctx,doctor,start,duration,[appointment,replace].filter(Boolean),ctx.operation);
+ if(google==='denied')return {error:'Não foi possível verificar seu acesso a este horário.'};
+ if(google==='busy')return {error:'O Google Agenda mostra um conflito neste horário. Escolha outro intervalo.'};
  const result=await ctx.client.rpc('save_appointment',{clinic_id:ctx.clinic.id,doctor_id:doctor,patient_id:patient,appointment_id:appointment||null,start_local:start,duration_minutes:duration,
   expected_version:appointment?version(data):null,replace_id:replace||null,replace_version:replacementVersion,own_only:ctx.own,operation_id:ctx.operation});
- const failure=mutationResult(result);if(failure)return failure;refresh();redirect(ctx.path+'/'+result.data.id+'?salvo=1');
+ const failure=mutationResult(result);if(failure)return failure;refresh();redirect(ctx.path+'/'+result.data.id+'?salvo=1'+(google==='unavailable'?'&google=indisponivel':''));
 }
 export async function changeAppointmentStatus(_state:FormState,data:FormData):Promise<FormState>{
  const ctx=await context(data),appointment=String(data.get('appointment')??''),status=String(data.get('status')??'');

@@ -18,7 +18,7 @@ async function tasks(client:Awaited<ReturnType<typeof api>>,id:string,own=false)
 test('reception sees versioned tasks and integration pendencies without claiming a sent message',async({page})=>{
  const s=await setup();expect(await tasks(s.client,s.id)).toHaveLength(2);
  await login(page,f.users.receptionA.email);await page.getByRole('link',{name:'Acompanhar automações'}).click();await expect(page.getByRole('heading',{name:'Automações da clínica'})).toBeVisible();
- await page.goto('/automacoes?consulta='+s.id);await expect(page.locator('.automation-list>li')).toHaveCount(2);await expect(page.getByText('Nenhum evento externo ou mensagem é enviado nesta etapa.',{exact:false})).toBeVisible();
+ await page.goto('/automacoes?consulta='+s.id);await expect(page.locator('.automation-list>li')).toHaveCount(2);await expect(page.getByText('WhatsApp ainda não envia mensagens.',{exact:false})).toBeVisible();
  await page.goto('/agenda/'+s.id);await page.getByRole('button',{name:'Registrar confirmação'}).click();await expect(page.locator('.appointment-status')).toHaveText('Confirmada');
  const confirmed=await tasks(s.client,s.id);expect(confirmed.filter(t=>t.appointment_version===1).every(t=>t.status==='cancelled')).toBe(true);expect(confirmed.filter(t=>t.appointment_version===2)).toHaveLength(2);
  expect((await s.client.rpc('change_appointment_status',{clinic_id:f.clinics.a,appointment_id:s.id,next_status:'cancelada',expected_version:2,own_only:false,operation_id:randomUUID()})).error).toBeNull();

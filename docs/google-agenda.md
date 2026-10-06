@@ -2,7 +2,7 @@
 
 O projeto Google Cloud `integraconsultas` tem a Google Calendar API ativada e um cliente OAuth de desenvolvimento. O aplicativo está em modo de testes. A conta responsável pode ser substituída posteriormente por uma conta institucional, através das permissões do projeto.
 
-Esta primeira parte implementa autorização e seleção da agenda. **Ainda não cria, altera ou remove eventos, nem consulta conflitos de agendamentos.** A fila da etapa 020 continua registrando pendências. A etapa 021 permanece em desenvolvimento até integrar o adaptador e validar a sincronização.
+Esta primeira parte implementa autorização e seleção da agenda, validadas com consentimento real do titular. A criação, alteração e remoção de eventos e a consulta de disponibilidade são descritas na [etapa 022 de sincronização](google-sincronizacao.md), cuja ativação online e validação real de eventos ainda precisam ser concluídas.
 
 ## Passos disponíveis
 

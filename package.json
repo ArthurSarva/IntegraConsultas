@@ -12,6 +12,7 @@
     "db:stop": "node scripts/run-supabase.mjs stop",
     "db:reset": "node scripts/run-supabase.mjs db reset --local",
     "db:test": "node --test tests/database.test.mjs",
+    "test:google": "node --experimental-strip-types --test tests/google-core.test.mjs",
     "db:test:supabase": "node scripts/build-database-tests.mjs && node scripts/run-supabase.mjs test db --local",
     "db:lint": "node scripts/run-supabase.mjs db lint --local --schema app,private,api,audit --level warning --fail-on error",
     "db:advisors": "node scripts/run-supabase.mjs db advisors --local --type security --fail-on error",

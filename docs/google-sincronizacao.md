@@ -44,6 +44,15 @@ O agendador chama a função a cada minuto. Configurar no Vault apenas `integrac
 
 ## Verificação
 
+### Ativação no desenvolvimento
+
+Após autorização explícita do responsável, as quatro variáveis protegidas foram configuradas na função `google-sync` e o Vault recebeu somente o endereço e o segredo de autenticação do worker. A chave de criptografia existente foi preservada, sem inclusão no banco ou no Git.
+
+Em 05/10/2026 (horário de Brasília), a execução autenticada respondeu HTTP 200 com `processed: 0`; uma chamada sem segredo respondeu HTTP 401. O agendador está ativo a cada minuto. Não havia tarefa elegível na agenda conectada nesse ciclo; isso verifica execução e autenticação, sem comprovar ainda criação, reagendamento ou cancelamento real no Google.
+
+A ativação identificou e corrigiu dois problemas do ambiente online: prazo HTTP de um segundo insuficiente para inicialização, ampliado para 120 segundos; e importação explícita de `Buffer` para compatibilidade do módulo de criptografia com Deno. A migração mantém as permissões restritas do despacho. Testes de eventos reais devem usar cadastro fictício e consulta identificada como teste, antes da operação clínica.
+
 Testes locais com PostgreSQL descartável cobrem privilégios, isolamento, reserva concorrente, token incorreto, payload sem paciente, conflito preservado, reagendamento e conclusão. Testes do adaptador usam respostas sintéticas para criação, atualização, cancelamento, paginação, conflito, ETag, token revogado, duplicação e versão anterior. A CI executa os fluxos web com Supabase descartável; não usa contas pessoais Google. Um teste real de eventos deve usar uma consulta/agenda identificada como teste e conferir criação, reagendamento e cancelamento antes de liberar operação clínica.
 
 Referências: [Google — Events insert](https://developers.google.com/workspace/calendar/api/v3/reference/events/insert), [Google — Events list](https://developers.google.com/workspace/calendar/api/v3/reference/events/list), [Supabase — agendar funções](https://supabase.com/docs/guides/functions/schedule-functions).
+

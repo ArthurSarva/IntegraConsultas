@@ -14,5 +14,5 @@ test('doctor sees own connection and rejects an OAuth callback without state coo
  await login(page,'doctor');await page.getByRole('link',{name:'Configurar Google Agenda'}).click();await expect(page.getByRole('heading',{name:'Conectar Google Agenda',exact:true})).toBeVisible();
  await expect(page.getByText('A integração Google ainda precisa ser configurada pela administração do sistema.',{exact:true})).toBeVisible();
  await page.goto('/integracoes/google/retorno?code=synthetic-invalid&state=synthetic-invalid');await expect(page).toHaveURL(/\/integracoes\/google\?erro=expirado$/);
- await expect(page.getByRole('alert')).toBeVisible();await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+ await expect(page.getByRole('alert').filter({hasText:'Não foi possível concluir a conexão'})).toBeVisible();await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });

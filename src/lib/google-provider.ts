@@ -9,7 +9,11 @@ export class GoogleProvider{
   let r:Response;try{r=await this.transport(url,{...init,headers:{Authorization:'Bearer '+this.access,...init.headers},signal:AbortSignal.timeout(12000),cache:'no-store'});}catch{throw new GoogleFailure('transient_failure');}
   if(r.status===429||r.status>=500||r.status===412)throw new GoogleFailure('transient_failure');
   if(r.status===401)throw new GoogleFailure('integration_not_configured');
-  if(r.status===403)throw new GoogleFailure('permanent_failure');return r;
+  if(r.status===403){
+   const body=await r.clone().json().catch(()=>null);
+   if(body?.error?.errors?.some((e:{reason?:string})=>['rateLimitExceeded','userRateLimitExceeded'].includes(e.reason??'')))throw new GoogleFailure('transient_failure');
+   throw new GoogleFailure('permanent_failure');
+  }return r;
  }
  private base(calendar:string){return 'https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calendar)+'/events';}
  async busy(calendar:string,start:string,end:string,ignore:string[]=[]){

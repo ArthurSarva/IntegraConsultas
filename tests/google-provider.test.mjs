@@ -25,6 +25,8 @@ test('pagination checks all events; transparent and cancelled events do not bloc
  const m=mock([{body:{items:[{id:'a',transparency:'transparent'},{id:'b',status:'cancelled'}],nextPageToken:'page2'}},{body:{items:[{id:'busy'}]}}]);assert.equal(await new GoogleProvider('synthetic',m.fetch).busy(input.calendar,input.start,input.end),true);assert.match(m.calls[1].url,/pageToken=page2/);
 });
 test('retry errors, revoked tokens, duplicate insert and newer version are handled',async()=>{
+ for(const reason of ['rateLimitExceeded','userRateLimitExceeded']){const limited=mock([{status:403,body:{error:{errors:[{reason}]}}}]);await assert.rejects(()=>new GoogleProvider('synthetic',limited.fetch).sync(input,async()=>true),e=>e.outcome==='transient_failure');}
+ const forbidden=mock([{status:403,body:{error:{errors:[{reason:'forbidden'}]}}}]);await assert.rejects(()=>new GoogleProvider('synthetic',forbidden.fetch).sync(input,async()=>true),e=>e.outcome==='permanent_failure');
  for(const status of [429,500,412]){const m=mock([{status}]);await assert.rejects(()=>new GoogleProvider('synthetic',m.fetch).sync(input,async()=>true),e=>e.outcome==='transient_failure');}
  const revoked=mock([{status:400}]);await assert.rejects(()=>renewGoogle('id','secret','refresh',revoked.fetch),e=>e.outcome==='integration_not_configured');
  const duplicate=mock([{status:404},{body:{items:[]}},{status:409}]);await assert.rejects(()=>new GoogleProvider('synthetic',duplicate.fetch).sync(input,async()=>true),e=>e.outcome==='transient_failure');

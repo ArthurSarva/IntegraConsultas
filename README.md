@@ -14,6 +14,8 @@ Consulte [base web e autenticação](docs/base-web.md) para iniciar a aplicaçã
 
 ## Documentação
 
+- [Reforço de segurança das páginas e alteração de senha](docs/reforco-seguranca.md)
+
 - [Estrutura WhatsApp e pendência de ativação](docs/whatsapp-estrutura.md)
 
 - [Conexão individual com Google Agenda](docs/google-agenda.md)

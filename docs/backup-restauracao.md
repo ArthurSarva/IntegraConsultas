@@ -5,9 +5,9 @@ Branch: `025-backup-restauracao`. Esta etapa comprova a recuperação lógica co
 ## O que o teste executa
 
 1. Exige um Docker conectado por socket local e o contêiner do Supabase deste projeto. Recusa o ensaio quando o banco local contém usuários ou clínicas.
-2. Cria dois bancos temporários com nomes aleatórios. Copia apenas a estrutura dos schemas `auth`, `app`, `private`, `api` e `audit` do Supabase local para o banco de origem.
+2. Cria dois bancos temporários com nomes aleatórios. Copia apenas a estrutura dos schemas `auth`, `app`, `private`, `api`, `audit` e `public` do Supabase local para o banco de origem. Inclui separadamente os privilégios padrão globais do banco, que uma exportação filtrada por schema pode omitir.
 3. Usa as identidades e os cenários fictícios da suíte SQL para gerar pacientes, consultas, auditoria, permissões e registros de integrações.
-4. Gera um arquivo lógico com `pg_dump` em formato customizado, mantido somente em memória. Confere SHA-256 antes de restaurar com `pg_restore`, em transação única e com interrupção em qualquer erro.
+4. Gera um arquivo lógico com `pg_dump` em formato customizado, mantido somente em memória. Confere SHA-256 do arquivo junto dos privilégios padrão antes de restaurar com `pg_restore`, em transação única e com interrupção em qualquer erro, e aplicar os privilégios padrão.
 5. Compara todas as linhas das tabelas incluídas, valores de sequências e estrutura, incluindo políticas RLS, proprietários, permissões, restrições, índices, funções e gatilhos.
 6. Repete a suíte de autorização e agenda usando os papéis PostgreSQL restaurados. Essa segunda verificação usa uma transação revertida e confirma novamente que os dados recuperados foram preservados.
 7. Remove somente os bancos que o próprio processo criou. Publica apenas contagens, duração e hash do arquivo, sem publicar registros ou credenciais.

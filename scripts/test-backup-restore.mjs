@@ -6,7 +6,7 @@ import {randomBytes} from 'node:crypto';
 import {temporaryDatabase, localDockerEndpoint, digest, verifyArchive} from './backup-guards.mjs';
 
 const container = 'supabase_db_IntegraConsultas';
-const schemas = ['auth', 'app', 'private', 'api', 'audit'];
+const schemas = ['auth', 'app', 'private', 'api', 'audit', 'public'];
 const schemaFlags = schemas.flatMap(schema => ['--schema', schema]);
 const suffix = randomBytes(6).toString('hex');
 const source = temporaryDatabase('ic_backup_source_' + suffix);
@@ -14,11 +14,15 @@ const restored = temporaryDatabase('ic_backup_restored_' + suffix);
 const created = new Set();
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 const started = Date.now();
+let globalDefaults = '';
 
 function docker(args, input) {
   const result = spawnSync('docker', args, {input, maxBuffer: 64 * 1024 * 1024, timeout: 120000});
   // Do not echo command output: it can contain synthetic Auth/credential columns.
-  if (result.error || result.status !== 0) throw new Error(`Local rehearsal command failed (${args[0]}, exit ${result.status ?? 'unavailable'}). No database output is published.`);
+  if (result.error || result.status !== 0) {
+    const hint = result.stderr?.toString().split('\n').find(line => /(?:ERROR:|pg_restore: error:)/.test(line))?.replace(/(['"])[^'"\n]*\1/g, '[redacted]').slice(0, 220) ?? 'No diagnostic available';
+    throw new Error(`Local rehearsal command failed (${args[0]} / ${args[6] ?? ''}, exit ${result.status ?? 'unavailable'}): ${hint}`);
+  }
   return result.stdout;
 }
 function pg(command, args, input) {
@@ -29,24 +33,31 @@ function sql(database, statement) {
   return pg('psql', ['-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-d', database], statement).toString().trim();
 }
 function extensions(database) {
-  sql(database, 'CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions; CREATE EXTENSION "uuid-ossp" WITH SCHEMA extensions; CREATE EXTENSION btree_gist WITH SCHEMA extensions;');
+  assert.ok(created.has(temporaryDatabase(database)));
+  sql(database, 'DROP SCHEMA public; CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions; CREATE EXTENSION "uuid-ossp" WITH SCHEMA extensions; CREATE EXTENSION btree_gist WITH SCHEMA extensions;');
 }
 function restore(database, bytes, expected) {
   temporaryDatabase(database);
   assert.ok(created.has(database), 'Restore target must have been created by this process');
-  verifyArchive(bytes, expected);
+  verifyArchive(Buffer.concat([Buffer.from(globalDefaults), bytes]), expected);
   pg('pg_restore', ['--exit-on-error', '--single-transaction', '-d', database], bytes);
+  sql(database, globalDefaults);
+}
+function readGlobalDefaults(database) {
+  // Namespace-filtered dumps can omit database-wide default ACLs. Capture these
+  // separately, from a data-free dump, and protect them with the archive digest.
+  return pg('pg_dump', ['-d', database, '--schema-only']).toString().split('\n').filter(line => /^ALTER DEFAULT PRIVILEGES /.test(line) && !/ IN SCHEMA /.test(line)).join('\n');
 }
 function tables(database) {
-  return JSON.parse(sql(database, `SELECT coalesce(json_agg(format('%I.%I',n.nspname,c.relname) ORDER BY n.nspname,c.relname),'[]') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('auth','app','private','api','audit') AND c.relkind='r';`));
+  return JSON.parse(sql(database, `SELECT coalesce(json_agg(format('%I.%I',n.nspname,c.relname) ORDER BY n.nspname,c.relname),'[]') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('auth','app','private','api','audit','public') AND c.relkind='r';`));
 }
 function snapshot(database) {
   const rows = tables(database).map(table => ({table, ...JSON.parse(sql(database, `SELECT json_build_object('count',count(*),'hash',md5(coalesce(string_agg(to_jsonb(t)::text,E'\n' ORDER BY to_jsonb(t)::text),''))) FROM ${table} t;`))}));
-  const sequences = JSON.parse(sql(database, `SELECT coalesce(json_agg(json_build_object('schema',schemaname,'name',sequencename,'last',last_value,'increment',increment_by) ORDER BY schemaname,sequencename),'[]') FROM pg_sequences WHERE schemaname IN ('auth','app','private','api','audit');`));
+  const sequences = JSON.parse(sql(database, `SELECT coalesce(json_agg(json_build_object('schema',schemaname,'name',sequencename,'last',last_value,'increment',increment_by) ORDER BY schemaname,sequencename),'[]') FROM pg_sequences WHERE schemaname IN ('auth','app','private','api','audit','public');`));
   // Schema-only archives include policies, grants, ownership, constraints, indexes,
   // triggers and functions. PostgreSQL emits a random psql restriction key.
   const schema = pg('pg_dump', ['-d', database, '--schema-only', ...schemaFlags]).toString().replace(/^\\(?:un)?restrict .*\r?\n/gm, '');
-  return {rows, sequences, schema: digest(schema)};
+  return {rows, sequences, schema: digest(schema), globalDefaultPrivileges:digest(readGlobalDefaults(database))};
 }
 
 try {
@@ -63,21 +74,24 @@ try {
   // Copy structure only from the actual local platform. No operational records,
   // Vault secrets, cron jobs, Storage objects or worker configuration are copied.
   const structure = pg('pg_dump', ['-d', 'postgres', '--format=custom', '--schema-only', ...schemaFlags]);
+  globalDefaults = readGlobalDefaults('postgres');
+  assert.ok(globalDefaults.length > 0, 'Global default privilege hardening must be present');
   for (const database of [source, restored]) {
     sql('postgres', `CREATE DATABASE ${temporaryDatabase(database)} TEMPLATE template0;`);
     created.add(database);
     extensions(database);
   }
-  restore(source, structure, digest(structure));
+  restore(source, structure, digest(Buffer.concat([Buffer.from(globalDefaults), structure])));
   const suite = (await Promise.all(['assertions','agenda','automations','google','google-sync','whatsapp'].map(name => read('tests/sql/' + name + '.sql')))).join('\n');
   const fixtures = await read('tests/sql/fixtures.sql');
   sql(source, 'BEGIN;\n' + fixtures + '\n' + suite + '\nRESET ROLE; COMMIT;');
+  sql(source, 'DROP FUNCTION public.exposure_probe_rpc(); DROP TABLE public.exposure_probe;');
   const before = snapshot(source);
   assert.ok(before.rows.find(row => row.table === 'app.patients')?.count > 0);
   assert.ok(before.rows.find(row => row.table === 'app.appointments')?.count > 0);
   assert.ok(before.rows.find(row => row.table === 'audit.events')?.count > 0);
   const archive = pg('pg_dump', ['-d', source, '--format=custom', ...schemaFlags]);
-  const checksum = digest(archive);
+  const checksum = digest(Buffer.concat([Buffer.from(globalDefaults), archive]));
   restore(restored, archive, checksum);
   assert.deepEqual(snapshot(restored), before, 'All table data, sequences and schema must survive restoration');
 

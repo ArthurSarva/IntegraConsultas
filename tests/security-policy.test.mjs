@@ -4,6 +4,8 @@ import {passwordMode,contentSecurityPolicy,transportSecurity} from '../src/lib/s
 const now=2000000000;
 const claims=(method,timestamp,aal='aal1')=>({role:'authenticated',aal,amr:[{method,timestamp}]});
 test('existing MFA requires recent signed TOTP evidence, not merely aal2 or refreshed JWT',()=>{
+ assert.equal(passwordMode(claims('mfa/totp',now-300,'aal2'),true,now),'allowed');
+ assert.equal(passwordMode(claims('mfa/totp',now-301,'aal2'),true,now),'totp');
  assert.equal(passwordMode(claims('totp',now-300,'aal2'),true,now),'allowed');
  assert.equal(passwordMode({...claims('totp',now-301,'aal2'),iat:now},true,now),'totp');
  assert.equal(passwordMode(claims('password',now,'aal2'),true,now),'totp');

@@ -8,7 +8,7 @@ export function passwordMode(claims:Claims,hasTotp:boolean,now=Math.floor(Date.n
   const e=entry as {method?:unknown;timestamp?:unknown};
   return e.method===method&&typeof e.timestamp==='number'&&Number.isSafeInteger(e.timestamp)&&now-e.timestamp>=0&&now-e.timestamp<=seconds;
  });
- if(hasTotp)return claims.aal==='aal2'&&recent('totp',300)?'allowed':'totp';
+ if(hasTotp)return claims.aal==='aal2'&&(recent('mfa/totp',300)||recent('totp',300))?'allowed':'totp';
  // verifyOtp issues method=otp for recovery and invitations in Supabase Auth.
  return recent('otp',600)||recent('recovery',600)||recent('invite',600)?'allowed':'recovery';
 }

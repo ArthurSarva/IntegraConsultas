@@ -13,8 +13,15 @@ test('HTML has unpredictable nonces, blocks injected scripts and protects forms'
  const html=await first.text();expect(html).toContain('nonce="'+nonce+'"');
  const violations:string[]=[];page.on('console',m=>{if(/content security policy/i.test(m.text()))violations.push(m.text());});
  await page.goto('/entrar');await page.getByLabel('Email',{exact:true}).fill('absent@example.invalid');await page.getByLabel('Senha',{exact:true}).fill('invalid-password');await page.getByRole('button',{name:'Entrar',exact:true}).click();await expect(page.locator('.form [role="alert"]')).toContainText('Não foi possível entrar');expect(violations).toEqual([]);
- await page.evaluate(()=>{const script=document.createElement('script');script.textContent='window.__injected = true';document.body.append(script);});
+ // Inject parser-visible untrusted markup; strict-dynamic intentionally trusts scripts
+ // created by an already trusted runtime, including the automation evaluation context.
+ await page.route('**/entrar',async route=>{
+  const response=await route.fetch();const body=await response.text();
+  await route.fulfill({response,body:body.replace('</body>','<script>window.__injected = true</script></body>')});
+ });
+ await page.goto('/entrar');await expect(page.getByLabel('Email',{exact:true})).toBeVisible();
  expect(await page.evaluate(()=>Boolean((window as unknown as {__injected?:boolean}).__injected))).toBe(false);
+ expect(violations.length).toBeGreaterThan(0);
 });
 test('ordinary session cannot change password',async({page})=>{
  await page.goto('/entrar');await page.getByLabel('Email',{exact:true}).fill(f.users.receptionA.email);await page.getByLabel('Senha',{exact:true}).fill(f.password);await page.getByRole('button',{name:'Entrar',exact:true}).click();await expect(page).toHaveURL(/\/clinicas$/);
@@ -52,7 +59,9 @@ test('recovery does not bypass an enrolled authenticator and valid challenge cha
  await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret)==='000000'?'000001':'000000');await page.getByRole('button',{name:'Salvar senha',exact:true}).click();await expect(page.locator('.form [role="alert"]')).toContainText('Código inválido');
  // Wait for a new code instead of replaying the code used during enrollment.
  await new Promise(resolve=>setTimeout(resolve,30000-(Date.now()%30000)+1000));
- await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret));await page.getByRole('button',{name:'Salvar senha',exact:true}).click();await expect(page).toHaveURL(/\/entrar\?senha=atualizada$/);
+ await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret));
+ await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().includes('/definir-senha')),page.getByRole('button',{name:'Salvar senha',exact:true}).click()]);
+ await expect(page.locator('.form [role="alert"]')).toHaveCount(0);await expect(page).toHaveURL(/\/entrar\?senha=atualizada$/);
  expect((await c.auth.signInWithPassword({email,password:f.password+'New'})).error).toBeNull();
  expect((await c.auth.signInWithPassword({email,password:f.password})).error).not.toBeNull();
  await admin.auth.admin.deleteUser(id);

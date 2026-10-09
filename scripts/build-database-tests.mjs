@@ -13,8 +13,10 @@ const sql = [
   await read('tests/sql/automations.sql'),
   await read('tests/sql/google.sql'),
   await read('tests/sql/google-sync.sql'),
+  await read('tests/sql/whatsapp.sql'),
   "select pass('All foundation SQL assertions passed on real Supabase Auth tables');",
   'select * from finish();',
   'rollback;'
 ].join('\n');
 await writeFile(new URL('base.test.sql',directory),sql);
+

@@ -13,6 +13,7 @@
     "db:reset": "node scripts/run-supabase.mjs db reset --local",
     "db:test": "node --test tests/database.test.mjs",
     "test:google": "node --experimental-strip-types --test tests/google-core.test.mjs tests/google-provider.test.mjs",
+    "test:security": "node --experimental-strip-types --test tests/security-policy.test.mjs",
     "test:whatsapp": "node --experimental-strip-types --test tests/whatsapp-core.test.mjs",
     "worker:google": "node --env-file=.env.local --experimental-strip-types scripts/google-worker.mjs",
     "db:test:supabase": "node scripts/build-database-tests.mjs && node scripts/run-supabase.mjs test db --local",
@@ -42,4 +43,5 @@
     "react-dom": "19.3.0"
   }
 }
+
 

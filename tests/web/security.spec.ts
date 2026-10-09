@@ -59,8 +59,11 @@ test('recovery does not bypass an enrolled authenticator and valid challenge cha
  await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret)==='000000'?'000001':'000000');await page.getByRole('button',{name:'Salvar senha',exact:true}).click();await expect(page.locator('.form [role="alert"]')).toContainText('Código inválido');
  // Wait for a new code instead of replaying the code used during enrollment.
  await new Promise(resolve=>setTimeout(resolve,30000-(Date.now()%30000)+1000));
+ // React resets uncontrolled form fields after the completed action, including errors.
+ await page.getByLabel('Nova senha',{exact:true}).fill(f.password+'New');
+ await page.getByLabel('Confirmar senha',{exact:true}).fill(f.password+'New');
  await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret));
- await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().includes('/definir-senha')),page.getByRole('button',{name:'Salvar senha',exact:true}).click()]);
+ await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&r.url().includes('/definir-senha'),{timeout:10000}),page.getByRole('button',{name:'Salvar senha',exact:true}).click()]);
  await expect(page.locator('.form [role="alert"]')).toHaveCount(0);await expect(page).toHaveURL(/\/entrar\?senha=atualizada$/);
  expect((await c.auth.signInWithPassword({email,password:f.password+'New'})).error).toBeNull();
  expect((await c.auth.signInWithPassword({email,password:f.password})).error).not.toBeNull();

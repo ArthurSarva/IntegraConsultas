@@ -33,6 +33,8 @@ export async function updatePassword(_state:FormState,data:FormData):Promise<For
   if (password.length<12 || password.length>128) return {error:'Use uma senha de 12 a 128 caracteres.'};
   if (password!==String(data.get('confirm')??'')) return {error:'As senhas precisam ser iguais.'};
   const {client,user}=await authenticated();
+  const renewed=await client.auth.refreshSession();
+  if(renewed.error||renewed.data.user?.id!==user.id)return {error:'Sua sessão expirou. Entre novamente ou solicite um novo link de recuperação.'};
   const security=await passwordSecurity(client,user.id);
   if(security.mode==='recovery')return {error:'Para definir sua senha, solicite e abra um novo link de recuperação.'};
   if(security.mode==='totp'){

@@ -4,7 +4,7 @@ Esta etapa depende da 023 e mantém o WhatsApp bloqueado. Não altera usuários,
 
 ## Alteração de senha
 
-Antes, qualquer sessão autenticada conseguia chamar a ação de alteração de senha da aplicação. Agora, a página e a ação verificam usuário atual, fatores cadastrados e claims assinadas verificadas pelo Supabase. As claims devem pertencer ao mesmo usuário retornado por `getUser`; metadados editáveis não concedem acesso.
+Antes, qualquer sessão autenticada conseguia chamar a ação de alteração de senha da aplicação. Agora, a página e a ação verificam usuário atual, fatores cadastrados e claims assinadas verificadas pelo Supabase. A ação exige também renovação válida da sessão antes da alteração, recusando refresh token revogado. As claims devem pertencer ao mesmo usuário retornado por `getUser`; metadados editáveis não concedem acesso.
 
 - Com autenticador TOTP verificado, é necessário `aal2` e evidência TOTP dos últimos cinco minutos. Se faltar, a tela pede código; o servidor faz novo desafio no fator da própria conta e confere o resultado antes de atualizar a senha.
 - Um convite ou recuperação não dispensa um autenticador já cadastrado. Perda do autenticador continua exigindo recuperação assistida, fora desta etapa.

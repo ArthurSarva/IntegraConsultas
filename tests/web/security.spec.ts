@@ -20,6 +20,23 @@ test('ordinary session cannot change password',async({page})=>{
  await page.goto('/entrar');await page.getByLabel('Email',{exact:true}).fill(f.users.receptionA.email);await page.getByLabel('Senha',{exact:true}).fill(f.password);await page.getByRole('button',{name:'Entrar',exact:true}).click();await expect(page).toHaveURL(/\/clinicas$/);
  await page.goto('/definir-senha');await expect(page.getByRole('link',{name:'Solicitar recuperação de senha'})).toBeVisible();await expect(page.getByRole('button',{name:'Salvar senha'})).toHaveCount(0);
 });
+test('revoked session cannot use an already open password form',async({page})=>{
+ const admin=createClient(f.url,f.adminKey,{auth:{persistSession:false,autoRefreshToken:false}});
+ const email='revoked-'+randomUUID()+'@example.invalid';const created=await admin.auth.admin.createUser({email,password:f.password,email_confirm:true});expect(created.error).toBeNull();const id=created.data.user!.id;
+ try{
+  const link=await admin.auth.admin.generateLink({type:'recovery',email});expect(link.error).toBeNull();
+  await page.goto('/auth/confirmar?type=recovery&token_hash='+link.data.properties!.hashed_token);await expect(page.getByRole('button',{name:'Salvar senha',exact:true})).toBeVisible();
+  const cookies=(await page.context().cookies()).filter(c=>/^sb-.+-auth-token(?:\.\d+)?$/.test(c.name)).sort((a,b)=>a.name.localeCompare(b.name));
+  const serialized=cookies.map(c=>c.value).join('');expect(serialized.startsWith('base64-')).toBe(true);
+  const session=JSON.parse(Buffer.from(serialized.slice(7),'base64url').toString('utf8'));
+  expect((await admin.auth.admin.signOut(session.access_token,'global')).error).toBeNull();
+  await page.getByLabel('Nova senha',{exact:true}).fill(f.password+'Changed');await page.getByLabel('Confirmar senha',{exact:true}).fill(f.password+'Changed');await page.getByRole('button',{name:'Salvar senha',exact:true}).click();
+  await expect(async()=>{if(new URL(page.url()).pathname==='/entrar')return;await expect(page.locator('.form [role="alert"]')).toContainText('Sua sessão expirou');}).toPass({timeout:10000});
+  const c=createClient(f.url,f.key,{auth:{persistSession:false,autoRefreshToken:false}});
+  expect((await c.auth.signInWithPassword({email,password:f.password+'Changed'})).error).not.toBeNull();
+  expect((await c.auth.signInWithPassword({email,password:f.password})).error).toBeNull();
+ }finally{await admin.auth.admin.deleteUser(id);}
+});
 test('recovery does not bypass an enrolled authenticator and valid challenge changes password',async({page})=>{
  test.setTimeout(90000);
  const admin=createClient(f.url,f.adminKey,{auth:{persistSession:false,autoRefreshToken:false}});

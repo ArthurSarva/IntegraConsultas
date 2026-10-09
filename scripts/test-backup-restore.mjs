@@ -102,7 +102,10 @@ try {
   // Re-exercise restored policies/functions under anon/authenticated roles.
   // Reset only fixture rows, inside a rolled-back transaction; the restored
   // dataset is compared again afterwards to prove this check is non-destructive.
-  sql(restored, 'BEGIN; TRUNCATE ' + tables(restored).join(',') + ' RESTART IDENTITY CASCADE;\n' + fixtures + '\n' + suite + '\nRESET ROLE; ROLLBACK;');
+  // Reset platform-owned fixture tables as the local administrator, then reduce
+  // session authorization BEFORE executing tests. RESET ROLE inside the suite
+  // must return to postgres, not to the platform superuser.
+  sql(restored, 'BEGIN; TRUNCATE ' + tables(restored).join(',') + ' RESTART IDENTITY CASCADE; SET LOCAL SESSION AUTHORIZATION postgres;\n' + fixtures + '\n' + suite + '\nRESET ROLE; ROLLBACK;', 'supabase_admin');
   assert.deepEqual(snapshot(restored), before, 'Validation must preserve the recovered dataset');
   console.log(JSON.stringify({result:'passed', tables:before.rows.length, rows:before.rows.reduce((total,row) => total + row.count,0), restoredSqlAssertions:(suite.match(/select pg_temp.assert_/g) || []).length, recoveredClinicIsolationChecks:2, archiveSha256:checksum, elapsedSeconds:Math.round((Date.now()-started)/1000), scope:'synthetic local databases; no hosted backup or live recovery'}, null, 2));
 } finally {

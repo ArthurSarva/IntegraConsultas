@@ -18,7 +18,7 @@ O workflow executa o ensaio após preparar e validar o Supabase local, antes de 
 
 Origem e destino usam a mesma versão do PostgreSQL e os mesmos papéis globais do contêiner. O teste preserva permissões; não usa as opções que descartam proprietários ou privilégios. Não é um procedimento de migração para outro projeto gerenciado.
 
-A exportação e a restauração usam o administrador interno do contêiner local para preservar proprietários dos objetos do Auth. A suíte de autorização continua executando como `postgres`, `anon`, `authenticated` e `service_role`, conforme cada cenário. Nenhum papel da aplicação recebe permissão administrativa adicional.
+A exportação, a restauração e a limpeza temporária das tabelas de teste usam o administrador interno do contêiner local para preservar proprietários dos objetos do Auth. Após essa limpeza, a autorização da sessão é reduzida para `postgres` antes de executar a suíte, de modo que `RESET ROLE` não retorne ao administrador interno. A suíte continua executando como `postgres`, `anon`, `authenticated` e `service_role`, conforme cada cenário. Nenhum papel da aplicação recebe permissão administrativa adicional.
 
 A suíte usa sessões e declarações JWT fictícias para testar autorização SQL. A restauração não comprova login HTTP, MFA ou entrega de email em um novo projeto. Os testes web existentes validam autenticação no Supabase local separadamente.
 

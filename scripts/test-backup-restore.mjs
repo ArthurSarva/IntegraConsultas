@@ -25,12 +25,12 @@ function docker(args, input) {
   }
   return result.stdout;
 }
-function pg(command, args, input) {
-  return docker(['exec', '-i', '-u', 'postgres', container, command, '-U', 'postgres', ...args], input);
+function pg(command, args, input, user = 'postgres') {
+  return docker(['exec', '-i', '-u', 'postgres', container, command, '-U', user, ...args], input);
 }
-function sql(database, statement) {
+function sql(database, statement, user = 'postgres') {
   if (database !== 'postgres') temporaryDatabase(database);
-  return pg('psql', ['-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-d', database], statement).toString().trim();
+  return pg('psql', ['-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-d', database], statement, user).toString().trim();
 }
 function extensions(database) {
   assert.ok(created.has(temporaryDatabase(database)));
@@ -40,23 +40,25 @@ function restore(database, bytes, expected) {
   temporaryDatabase(database);
   assert.ok(created.has(database), 'Restore target must have been created by this process');
   verifyArchive(Buffer.concat([Buffer.from(globalDefaults), bytes]), expected);
-  pg('pg_restore', ['--exit-on-error', '--single-transaction', '-d', database], bytes);
-  sql(database, globalDefaults);
+  // Local platform superuser preserves Auth ownership; never grant this ability
+  // to application roles or modify cluster memberships for the rehearsal.
+  pg('pg_restore', ['--exit-on-error', '--single-transaction', '-d', database], bytes, 'supabase_admin');
+  sql(database, globalDefaults, 'supabase_admin');
 }
 function readGlobalDefaults(database) {
   // Namespace-filtered dumps can omit database-wide default ACLs. Capture these
   // separately, from a data-free dump, and protect them with the archive digest.
-  return pg('pg_dump', ['-d', database, '--schema-only']).toString().split('\n').filter(line => /^ALTER DEFAULT PRIVILEGES /.test(line) && !/ IN SCHEMA /.test(line)).join('\n');
+  return pg('pg_dump', ['-d', database, '--schema-only'], undefined, 'supabase_admin').toString().split('\n').filter(line => /^ALTER DEFAULT PRIVILEGES /.test(line) && !/ IN SCHEMA /.test(line)).join('\n');
 }
 function tables(database) {
   return JSON.parse(sql(database, `SELECT coalesce(json_agg(format('%I.%I',n.nspname,c.relname) ORDER BY n.nspname,c.relname),'[]') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN ('auth','app','private','api','audit','public') AND c.relkind='r';`));
 }
 function snapshot(database) {
-  const rows = tables(database).map(table => ({table, ...JSON.parse(sql(database, `SELECT json_build_object('count',count(*),'hash',md5(coalesce(string_agg(to_jsonb(t)::text,E'\n' ORDER BY to_jsonb(t)::text),''))) FROM ${table} t;`))}));
+  const rows = tables(database).map(table => ({table, ...JSON.parse(sql(database, `SELECT json_build_object('count',count(*),'hash',md5(coalesce(string_agg(to_jsonb(t)::text,E'\n' ORDER BY to_jsonb(t)::text),''))) FROM ${table} t;`, 'supabase_admin'))}));
   const sequences = JSON.parse(sql(database, `SELECT coalesce(json_agg(json_build_object('schema',schemaname,'name',sequencename,'last',last_value,'increment',increment_by) ORDER BY schemaname,sequencename),'[]') FROM pg_sequences WHERE schemaname IN ('auth','app','private','api','audit','public');`));
   // Schema-only archives include policies, grants, ownership, constraints, indexes,
   // triggers and functions. PostgreSQL emits a random psql restriction key.
-  const schema = pg('pg_dump', ['-d', database, '--schema-only', ...schemaFlags]).toString().replace(/^\\(?:un)?restrict .*\r?\n/gm, '');
+  const schema = pg('pg_dump', ['-d', database, '--schema-only', ...schemaFlags], undefined, 'supabase_admin').toString().replace(/^\\(?:un)?restrict .*\r?\n/gm, '');
   return {rows, sequences, schema: digest(schema), globalDefaultPrivileges:digest(readGlobalDefaults(database))};
 }
 
@@ -73,7 +75,7 @@ try {
 
   // Copy structure only from the actual local platform. No operational records,
   // Vault secrets, cron jobs, Storage objects or worker configuration are copied.
-  const structure = pg('pg_dump', ['-d', 'postgres', '--format=custom', '--schema-only', ...schemaFlags]);
+  const structure = pg('pg_dump', ['-d', 'postgres', '--format=custom', '--schema-only', ...schemaFlags], undefined, 'supabase_admin');
   globalDefaults = readGlobalDefaults('postgres');
   assert.ok(globalDefaults.length > 0, 'Global default privilege hardening must be present');
   for (const database of [source, restored]) {
@@ -90,7 +92,7 @@ try {
   assert.ok(before.rows.find(row => row.table === 'app.patients')?.count > 0);
   assert.ok(before.rows.find(row => row.table === 'app.appointments')?.count > 0);
   assert.ok(before.rows.find(row => row.table === 'audit.events')?.count > 0);
-  const archive = pg('pg_dump', ['-d', source, '--format=custom', ...schemaFlags]);
+  const archive = pg('pg_dump', ['-d', source, '--format=custom', ...schemaFlags], undefined, 'supabase_admin');
   const checksum = digest(Buffer.concat([Buffer.from(globalDefaults), archive]));
   restore(restored, archive, checksum);
   assert.deepEqual(snapshot(restored), before, 'All table data, sequences and schema must survive restoration');

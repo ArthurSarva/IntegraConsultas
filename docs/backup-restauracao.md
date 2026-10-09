@@ -18,6 +18,8 @@ O workflow executa o ensaio após preparar e validar o Supabase local, antes de 
 
 Origem e destino usam a mesma versão do PostgreSQL e os mesmos papéis globais do contêiner. O teste preserva permissões; não usa as opções que descartam proprietários ou privilégios. Não é um procedimento de migração para outro projeto gerenciado.
 
+A exportação e a restauração usam o administrador interno do contêiner local para preservar proprietários dos objetos do Auth. A suíte de autorização continua executando como `postgres`, `anon`, `authenticated` e `service_role`, conforme cada cenário. Nenhum papel da aplicação recebe permissão administrativa adicional.
+
 A suíte usa sessões e declarações JWT fictícias para testar autorização SQL. A restauração não comprova login HTTP, MFA ou entrega de email em um novo projeto. Os testes web existentes validam autenticação no Supabase local separadamente.
 
 Ficam fora do arquivo: papéis globais e suas senhas, chaves e configurações de Auth, credenciais OAuth e de criptografia, secrets de funções, arquivos do Storage, configuração de DNS/SMTP, agendamentos Cron e infraestrutura. Nenhum worker é ativado nesses bancos. WhatsApp permanece sem envio.

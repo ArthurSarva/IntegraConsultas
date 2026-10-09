@@ -12,7 +12,7 @@ test('HTML has unpredictable nonces, blocks injected scripts and protects forms'
  expect(p).not.toContain('unsafe-eval');expect(p).toContain("frame-ancestors 'none'");expect(p).toContain("form-action 'self'");expect(first.headers()['strict-transport-security']).toBeUndefined();
  const html=await first.text();expect(html).toContain('nonce="'+nonce+'"');
  const violations:string[]=[];page.on('console',m=>{if(/content security policy/i.test(m.text()))violations.push(m.text());});
- await page.goto('/entrar');await page.getByLabel('Email',{exact:true}).fill('absent@example.invalid');await page.getByLabel('Senha',{exact:true}).fill('invalid-password');await page.getByRole('button',{name:'Entrar',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Não foi possível entrar');expect(violations).toEqual([]);
+ await page.goto('/entrar');await page.getByLabel('Email',{exact:true}).fill('absent@example.invalid');await page.getByLabel('Senha',{exact:true}).fill('invalid-password');await page.getByRole('button',{name:'Entrar',exact:true}).click();await expect(page.locator('.form [role="alert"]')).toContainText('Não foi possível entrar');expect(violations).toEqual([]);
  await page.evaluate(()=>{const script=document.createElement('script');script.textContent='window.__injected = true';document.body.append(script);});
  expect(await page.evaluate(()=>Boolean((window as unknown as {__injected?:boolean}).__injected))).toBe(false);
 });
@@ -32,7 +32,7 @@ test('recovery does not bypass an enrolled authenticator and valid challenge cha
  const link=await admin.auth.admin.generateLink({type:'recovery',email});expect(link.error).toBeNull();
  await page.goto('/auth/confirmar?type=recovery&token_hash='+link.data.properties!.hashed_token);await expect(page).toHaveURL(/\/definir-senha$/);await expect(page.getByLabel('Código do autenticador')).toBeVisible();
  await page.getByLabel('Nova senha',{exact:true}).fill(f.password+'New');await page.getByLabel('Confirmar senha',{exact:true}).fill(f.password+'New');
- await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret)==='000000'?'000001':'000000');await page.getByRole('button',{name:'Salvar senha',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Código inválido');
+ await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret)==='000000'?'000001':'000000');await page.getByRole('button',{name:'Salvar senha',exact:true}).click();await expect(page.locator('.form [role="alert"]')).toContainText('Código inválido');
  // Wait for a new code instead of replaying the code used during enrollment.
  await new Promise(resolve=>setTimeout(resolve,30000-(Date.now()%30000)+1000));
  await page.getByLabel('Código do autenticador').fill(totp(factor.totp.secret));await page.getByRole('button',{name:'Salvar senha',exact:true}).click();await expect(page).toHaveURL(/\/entrar\?senha=atualizada$/);

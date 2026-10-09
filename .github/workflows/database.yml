@@ -24,6 +24,7 @@ jobs:
       - run: pnpm test:google
       - run: pnpm test:whatsapp
       - run: pnpm test:security
+      - run: pnpm test:backup:guards
       - run: pnpm typecheck
       - name: Start disposable local Supabase
         run: pnpm db:start > "$RUNNER_TEMP/supabase-start.log" 2>&1
@@ -31,6 +32,8 @@ jobs:
       - run: pnpm db:test:supabase
       - run: pnpm db:lint
       - run: pnpm db:advisors
+      - name: Rehearse synthetic backup and restoration
+        run: pnpm db:test:restore
       - name: Prepare disposable web identities
         run: node scripts/prepare-web-tests.mjs
       - name: Install test browser
@@ -43,5 +46,4 @@ jobs:
         run: pnpm test:invite:dev
       - if: always()
         run: pnpm db:stop
-
 

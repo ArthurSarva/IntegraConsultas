@@ -88,6 +88,7 @@ try {
   const fixtures = await read('tests/sql/fixtures.sql');
   sql(source, 'BEGIN;\n' + fixtures + '\n' + suite + '\nRESET ROLE; COMMIT;');
   sql(source, 'DROP FUNCTION public.exposure_probe_rpc(); DROP TABLE public.exposure_probe;');
+  sql(source, await read('tests/sql/backup-fixtures.sql'));
   const before = snapshot(source);
   assert.ok(before.rows.find(row => row.table === 'app.patients')?.count > 0);
   assert.ok(before.rows.find(row => row.table === 'app.appointments')?.count > 0);
@@ -96,13 +97,14 @@ try {
   const checksum = digest(Buffer.concat([Buffer.from(globalDefaults), archive]));
   restore(restored, archive, checksum);
   assert.deepEqual(snapshot(restored), before, 'All table data, sequences and schema must survive restoration');
+  sql(restored, await read('tests/sql/backup-restored-isolation.sql'));
 
   // Re-exercise restored policies/functions under anon/authenticated roles.
   // Reset only fixture rows, inside a rolled-back transaction; the restored
   // dataset is compared again afterwards to prove this check is non-destructive.
   sql(restored, 'BEGIN; TRUNCATE ' + tables(restored).join(',') + ' RESTART IDENTITY CASCADE;\n' + fixtures + '\n' + suite + '\nRESET ROLE; ROLLBACK;');
   assert.deepEqual(snapshot(restored), before, 'Validation must preserve the recovered dataset');
-  console.log(JSON.stringify({result:'passed', tables:before.rows.length, rows:before.rows.reduce((total,row) => total + row.count,0), restoredSqlAssertions:(suite.match(/select pg_temp.assert_/g) || []).length, archiveSha256:checksum, elapsedSeconds:Math.round((Date.now()-started)/1000), scope:'synthetic local databases; no hosted backup or live recovery'}, null, 2));
+  console.log(JSON.stringify({result:'passed', tables:before.rows.length, rows:before.rows.reduce((total,row) => total + row.count,0), restoredSqlAssertions:(suite.match(/select pg_temp.assert_/g) || []).length, recoveredClinicIsolationChecks:2, archiveSha256:checksum, elapsedSeconds:Math.round((Date.now()-started)/1000), scope:'synthetic local databases; no hosted backup or live recovery'}, null, 2));
 } finally {
   for (const database of [...created].reverse()) {
     sql('postgres', `DROP DATABASE ${temporaryDatabase(database)};`);

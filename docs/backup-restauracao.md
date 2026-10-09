@@ -9,7 +9,7 @@ Branch: `025-backup-restauracao`. Esta etapa comprova a recuperação lógica co
 3. Usa as identidades e os cenários fictícios da suíte SQL para gerar pacientes, consultas, auditoria, permissões e registros de integrações.
 4. Gera um arquivo lógico com `pg_dump` em formato customizado, mantido somente em memória. Confere SHA-256 do arquivo junto dos privilégios padrão antes de restaurar com `pg_restore`, em transação única e com interrupção em qualquer erro, e aplicar os privilégios padrão.
 5. Compara todas as linhas das tabelas incluídas, valores de sequências e estrutura, incluindo políticas RLS, proprietários, permissões, restrições, índices, funções e gatilhos.
-6. Repete a suíte de autorização e agenda usando os papéis PostgreSQL restaurados. Essa segunda verificação usa uma transação revertida e confirma novamente que os dados recuperados foram preservados.
+6. Verifica nos próprios registros recuperados que cada uma das duas recepções fictícias vê somente o paciente da sua clínica. Repete também a suíte de autorização e agenda usando os papéis PostgreSQL restaurados. As verificações usam transações revertidas e confirmam novamente que os dados recuperados foram preservados.
 7. Remove somente os bancos que o próprio processo criou. Publica apenas contagens, duração e hash do arquivo, sem publicar registros ou credenciais.
 
 O workflow executa o ensaio após preparar e validar o Supabase local, antes de criar contas para os testes da interface. Para reproduzir, em ambiente **inteiramente descartável**, instalar as dependências, iniciar e recriar o Supabase local e executar `pnpm test:backup:guards` e `pnpm db:test:restore`. Não recriar o banco local usado para trabalho ou demonstração.

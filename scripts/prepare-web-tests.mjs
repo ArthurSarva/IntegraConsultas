@@ -12,6 +12,9 @@ for(const line of status.stdout.split('\n')){
 }
 const url=vars.API_URL;
 if(!url||new URL(url).origin!=='http://127.0.0.1:54321')throw new Error('Fixtures are restricted to disposable local Supabase');
+// Pause the disposable scheduler so browser assertions control exactly when work occurs.
+const pause=spawnSync(process.execPath,['scripts/run-supabase.mjs','db','query','--local',"do $pause$ begin if to_regclass('cron.job') is not null then execute 'update cron.job set active=false where jobname=''integraconsultas-foundation'''; end if; end $pause$;"],{encoding:'utf8'});
+if(pause.status!==0)throw new Error('Could not pause disposable automation scheduler');
 const key=vars.PUBLISHABLE_KEY||vars.ANON_KEY;
 const adminKey=vars.SECRET_KEY||vars.SERVICE_ROLE_KEY;
 if(!key||!adminKey)throw new Error('Local Supabase keys unavailable');

@@ -22,7 +22,7 @@ export default async function GooglePage({searchParams}:{searchParams:Promise<{e
  <form action={connectGoogle} className="form patient-form"><input type="hidden" name="clinic" value={ctx.clinic.id}/><button className="secondary">Escolher outra conta Google</button></form></>
  :configured?<><p>Você autoriza o acesso diretamente no Google. O sistema solicitará a lista de agendas, a consulta de disponibilidade e a criação, alteração e remoção de eventos em agendas de sua propriedade.</p><form action={connectGoogle} className="form patient-form"><input type="hidden" name="clinic" value={ctx.clinic.id}/><button className="primary">Conectar Google Agenda</button></form></>
  :<p className="notice">A integração Google ainda precisa ser configurada pela administração do sistema.</p>}
- </section><p className="notice">Esta etapa registra a conexão. A sincronização automática das consultas ainda está em preparação; vincular a agenda não envia consultas ao Google.</p>
+ </section><p className="notice">Acompanhe a sincronização das consultas pelas pendências de automação da sua agenda. A execução automática depende da ativação pelo responsável do sistema.</p>
  <p className="footnote">Ao desconectar, o acesso armazenado para esta clínica é removido. Eventos já existentes no Google são preservados. Para revogar também a autorização no Google, use as configurações de sua Conta Google; isso pode afetar conexões em outras clínicas.</p>
  <Link href="/minha-agenda" className="text-link">Voltar à minha agenda</Link></main></div>;
 }

@@ -1,4 +1,5 @@
 import {createCipheriv,createDecipheriv,createHash,randomBytes,timingSafeEqual} from 'node:crypto';
+import {Buffer} from 'node:buffer';
 
 export const GOOGLE_SCOPES=[
  'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
@@ -31,3 +32,4 @@ export function ownedCalendars(input:unknown):GoogleCalendar[]{
  if(!input||typeof input!=='object'||!Array.isArray((input as {items?:unknown}).items))throw new Error('Invalid calendar response');
  return (input as {items:GoogleCalendar[]}).items.filter(item=>item.accessRole==='owner'&&typeof item.id==='string'&&item.id.length<=1024&&typeof item.summary==='string').map(item=>({...item,summary:item.summary.slice(0,256)||'Agenda Google'}));
 }
+

@@ -13,7 +13,7 @@ export async function AutomationPage({ownOnly=false,query={}}:{ownOnly?:boolean;
  const records=response.data.records as Task[],route=ownOnly?'/minhas-automacoes':'/automacoes',suffix=appointment?'&consulta='+appointment:'';
  return <div className="workspace"><WorkspaceHeader clinic={clinic.name}/><main id="conteudo"><p className="eyebrow">{clinic.name}</p><h1>{ownOnly?'Automações da minha agenda':'Automações da clínica'}</h1>
  <p className="muted">Acompanhe o planejamento e as pendências das consultas dentro do seu acesso.</p>
- <p className="notice">Google Agenda e WhatsApp ainda não estão conectados. Nenhum evento externo ou mensagem é enviado nesta etapa.</p>
+ <p className="notice">A sincronização Google e os lembretes por WhatsApp ainda não estão ativos. Nenhum evento externo ou mensagem é enviado nesta etapa.</p>
  <p className="field-help">Horários no fuso {clinic.timezone}. {response.data.worker?.last_run_local?'Última verificação automática: '+localDisplay(response.data.worker.last_run_local)+'.':'A primeira verificação automática ainda não foi registrada.'}</p>
  {appointment&&<p><Link href={route} className="text-link">Ver tarefas de todas as consultas do meu acesso</Link></p>}
  <form method="get" className="agenda-toolbar">{appointment&&<input type="hidden" name="consulta" value={appointment}/>}<button className="secondary">Atualizar tarefas</button></form>

@@ -1,6 +1,6 @@
 import {test,expect,type Page,type BrowserContext} from '@playwright/test';
 import {createClient} from '@supabase/supabase-js';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,randomInt} from 'node:crypto';
 import {fixture,localOnly,sql} from './local';
 import {totp} from './totp';
 const f=fixture();localOnly(f.url);
@@ -29,7 +29,7 @@ async function confirm(page:Page,label:string){
 
 test('patient deletion requires confirmation, rejects stale edits and preserves consultation history by archiving',async({page,browser})=>{
  test.setTimeout(120000);await login(page,f.users.receptionA.email);const client=await browserClient(page.context());
- const name='Excluir fictício '+randomUUID(),request={clinic_id:f.clinics.a,patient_id:null,display_name:name,birth_date:'1990-01-01',phone:'+5511999990701',email:null,cpf:null,expected_version:null,allow_duplicate:false,own_only:false,operation_id:randomUUID()};
+ const name='Excluir fictício '+randomUUID(),request={clinic_id:f.clinics.a,patient_id:null,display_name:name,birth_date:'1990-01-01',phone:'+55119'+randomInt(10000000,100000000),email:null,cpf:null,expected_version:null,allow_duplicate:false,own_only:false,operation_id:randomUUID()};
  const saved=await client.rpc('save_patient',request);expect(saved.error).toBeNull();expect(saved.data.status).toBe('saved');const id=saved.data.id;
  await page.goto('/pacientes/'+id);await page.getByRole('button',{name:'Excluir cadastro',exact:true}).click();
  await page.getByRole('form',{name:'Excluir cadastro'}).getByRole('button',{name:'Excluir cadastro',exact:true}).click();expect((await client.rpc('get_patient',{clinic_id:f.clinics.a,patient_id:id,own_only:false})).data).not.toBeNull();

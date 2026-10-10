@@ -11,6 +11,7 @@ const sql = [
   await read('tests/sql/assertions.sql'),
   await read('tests/sql/agenda.sql'),
   await read('tests/sql/automations.sql'),
+  await read('tests/sql/google.sql'),
   "select pass('All foundation SQL assertions passed on real Supabase Auth tables');",
   'select * from finish();',
   'rollback;'

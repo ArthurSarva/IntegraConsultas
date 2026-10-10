@@ -14,7 +14,7 @@ test('schema, isolation, authorization, MFA and session context', async () => {
     }
     await db.exec('begin');
     await db.exec(await read('tests/sql/fixtures.sql'));
-    const suite = await read('tests/sql/assertions.sql')+'\n'+await read('tests/sql/agenda.sql')+'\n'+await read('tests/sql/automations.sql');
+    const suite = await read('tests/sql/assertions.sql')+'\n'+await read('tests/sql/agenda.sql')+'\n'+await read('tests/sql/automations.sql')+'\n'+await read('tests/sql/google.sql');
     await db.exec(suite);
     const count = (suite.match(/select pg_temp.assert_/g) || []).length;
     assert.ok(count >= 30);

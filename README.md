@@ -6,7 +6,7 @@ Aplicação web para agendamento de consultas de múltiplas clínicas, lembretes
 
 Fase de implementação funcional. Estado atualizado em 05/10/2026; não representa aplicação clínica pronta nem certificação de conformidade com a LGPD.
 
-Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada em 02/10/2026. Base de identidade, clínicas, vínculos e isolamento disponível localmente e no Supabase de desenvolvimento. Base web com login, recuperação de senha, autenticação em duas etapas, seleção de clínica e cadastro de clínicas e administradores pelo Dev com convite individual. Cadastros de equipe e pacientes, agenda interna com horários e bloqueios e base de tarefas de automação implementados. Google Agenda e WhatsApp ainda não estão conectados; a base de automações registra pendências sem realizar envios.
+Banco e autenticação: Supabase (PostgreSQL e Supabase Auth), escolha aprovada em 02/10/2026. Base de identidade, clínicas, vínculos e isolamento disponível localmente e no Supabase de desenvolvimento. Base web com login, recuperação de senha, autenticação em duas etapas, seleção de clínica e cadastro de clínicas e administradores pelo Dev com convite individual. Cadastros de equipe e pacientes, agenda interna com horários e bloqueios e base de tarefas de automação implementados. Conexão individual Google com autorização e seleção de agenda implementada na etapa 021 em desenvolvimento. Sincronização de eventos Google e envio WhatsApp ainda não ativos; a base de automações registra pendências sem realizar envios.
 
 ## Desenvolvimento
 
@@ -14,6 +14,7 @@ Consulte [base web e autenticação](docs/base-web.md) para iniciar a aplicaçã
 
 ## Documentação
 
+- [Conexão individual com Google Agenda](docs/google-agenda.md)
 - [Agenda interna e consultas](docs/agenda-consultas.md)
 - [Base de automações e execução no servidor](docs/base-automacoes.md)
 - [Cadastro de pacientes](docs/cadastro-pacientes.md)
@@ -37,4 +38,3 @@ Consulte [base web e autenticação](docs/base-web.md) para iniciar a aplicaçã
 A agenda oficial pertence ao IntegraConsultas. Cada clínica possui dados e permissões isolados. O início operacional será com uma clínica, mantendo suporte a múltiplas clínicas. Segurança, isolamento, integridade da agenda, auditoria e restauração de backups são condições obrigatórias de lançamento.
 
 Não inserir dados reais de pacientes, senhas, tokens ou credenciais neste repositório.
-

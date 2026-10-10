@@ -23,6 +23,7 @@ jobs:
       - run: pnpm db:test
       - run: pnpm test:google
       - run: pnpm test:whatsapp
+      - run: pnpm test:security
       - run: pnpm typecheck
       - name: Start disposable local Supabase
         run: pnpm db:start > "$RUNNER_TEMP/supabase-start.log" 2>&1
@@ -42,4 +43,5 @@ jobs:
         run: pnpm test:invite:dev
       - if: always()
         run: pnpm db:stop
+
 

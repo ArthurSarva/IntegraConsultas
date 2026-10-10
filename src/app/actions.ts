@@ -5,6 +5,7 @@ import {authenticated,authorized} from '@/lib/identity';
 import {createClient} from '@/lib/supabase/server';
 import {appOrigin} from '@/lib/config';
 import type {FormState} from '@/components/form';
+import {passwordSecurity} from '@/lib/password-security';
 const text=(data:FormData,key:string)=>String(data.get(key)??'').trim();
 export async function login(_state:FormState,data:FormData):Promise<FormState> {
   const email=text(data,'email'); const password=String(data.get('password')??'');
@@ -31,7 +32,18 @@ export async function updatePassword(_state:FormState,data:FormData):Promise<For
   const password=String(data.get('password')??'');
   if (password.length<12 || password.length>128) return {error:'Use uma senha de 12 a 128 caracteres.'};
   if (password!==String(data.get('confirm')??'')) return {error:'As senhas precisam ser iguais.'};
-  const {client}=await authenticated();
+  const {client,user}=await authenticated();
+  const renewed=await client.auth.refreshSession();
+  if(renewed.error||renewed.data.user?.id!==user.id)return {error:'Sua sessão expirou. Entre novamente ou solicite um novo link de recuperação.'};
+  const security=await passwordSecurity(client,user.id);
+  if(security.mode==='recovery')return {error:'Para definir sua senha, solicite e abra um novo link de recuperação.'};
+  if(security.mode==='totp'){
+    const code=text(data,'code');
+    if(!security.factor||!/^\d{6}$/.test(code))return {error:'Confirme o código de seis dígitos do seu aplicativo autenticador.'};
+    const verification=await client.auth.mfa.challengeAndVerify({factorId:security.factor.id,code});
+    if(verification.error)return {error:'Código inválido ou expirado. Confira o aplicativo e tente novamente.'};
+    if((await passwordSecurity(client,user.id)).mode!=='allowed')return {error:'Não foi possível confirmar seu acesso. Tente novamente.'};
+  }
   const {error}=await client.auth.updateUser({password});
   if (error) return {error:'Não foi possível definir a senha. O link pode ter expirado ou pode ser necessária uma nova verificação.'};
   const {error:signOutError}=await client.auth.signOut({scope:'global'});
@@ -46,3 +58,4 @@ export async function selectClinic(_state:FormState,data:FormData):Promise<FormS
   if (error) return {error:'Não foi possível selecionar esta clínica. Confira seu acesso e tente novamente.'};
   revalidatePath('/','layout'); redirect('/inicio');
 }
+

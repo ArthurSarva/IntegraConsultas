@@ -40,8 +40,9 @@ Consulte [base web e autenticação](docs/base-web.md) para iniciar a aplicaçã
 
 ## Diretrizes
 
+Ensaio automatizado e limites operacionais: [Backup e restauração](docs/backup-restauracao.md).
+
 A agenda oficial pertence ao IntegraConsultas. Cada clínica possui dados e permissões isolados. O início operacional será com uma clínica, mantendo suporte a múltiplas clínicas. Segurança, isolamento, integridade da agenda, auditoria e restauração de backups são condições obrigatórias de lançamento.
 
 Não inserir dados reais de pacientes, senhas, tokens ou credenciais neste repositório.
-
 

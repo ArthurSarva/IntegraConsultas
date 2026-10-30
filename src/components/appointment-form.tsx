@@ -16,7 +16,8 @@ export function AppointmentForm({clinicId,ownOnly,ownDoctor,doctors,operation,st
  const hidden=<><input type="hidden" name="clinic" value={clinicId}/><input type="hidden" name="own" value={ownOnly?'on':''}/></>;
  return <>
  {!appointment&&<form action={searchAction} className="form agenda-patient-picker">{hidden}<input type="hidden" name="page" value="0"/>
- <label htmlFor="agenda-patient-query">Pesquisar paciente por nome ou contato</label><input id="agenda-patient-query" name="query" minLength={3} maxLength={120} required autoComplete="off"/>
+ <label htmlFor="agenda-patient-query">Pesquisar paciente por nome, CPF ou contato</label><input id="agenda-patient-query" name="query" minLength={3} maxLength={120} required autoComplete="off" aria-describedby="agenda-patient-search-help"/>
+ <p id="agenda-patient-search-help" className="field-help">Digite parte do nome (pelo menos três caracteres) ou o CPF completo, com ou sem pontuação. Também é possível pesquisar por telefone ou email.</p>
  <button className="secondary" disabled={searchPending}>{searchPending?'Pesquisando…':'Pesquisar paciente'}</button>
  {search.error&&<p className="notice error" role="alert">{search.error}</p>}
  {search.records.length?<><label htmlFor="agenda-patient">Paciente</label><select id="agenda-patient" value={patient} onChange={e=>setPatient(e.target.value)}><option value="">Selecione o paciente</option>{search.records.map(p=><option value={p.id} key={p.id}>{p.display_name} · {p.birth_date.split('-').reverse().join('/')}</option>)}</select>{search.has_more&&<p className="field-help">Refine a pesquisa para localizar o paciente entre os primeiros 25 resultados.</p>}</>:<p className="field-help">Pesquise e selecione um paciente do seu acesso. Cadastre primeiro quem ainda não possui cadastro.</p>}

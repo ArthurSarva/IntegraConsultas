@@ -30,7 +30,7 @@ Vínculos de atendimentos futuros serão acrescentados pelo módulo de agenda em
 
 ## Interface e privacidade
 
-O início oferece **Abrir pacientes** à recepção, administração e Dev. Médicos usam **Abrir meus pacientes**. Listas possuem 25 registros por página e exibem nome, nascimento, telefone e somente o sufixo do CPF. CPF completo e email são apresentados ao abrir o cadastro autorizado. É possível pesquisar por nome, telefone, email ou CPF; buscas não vazias exigem pelo menos três caracteres.
+O início oferece **Abrir pacientes** à recepção, administração e Dev. Médicos usam **Abrir meus pacientes**. Listas possuem 25 registros por página e exibem nome, nascimento, telefone e somente o sufixo do CPF. CPF completo e email são apresentados ao abrir o cadastro autorizado. É possível pesquisar por parte do nome (sem diferenciar maiúsculas e acentos comuns), telefone, email ou CPF completo, com ou sem pontuação; buscas não vazias exigem pelo menos três caracteres. A mesma busca é usada no seletor de pacientes ao agendar consultas, com os mesmos limites de acesso. CPF ausente no cadastro não pode ser localizado por documento.
 
 Pesquisa e salvamento usam Server Actions por POST. Termos pesquisados, nomes, CPF e telefone não são incluídos na URL. Endereços de cadastro usam identificador UUID opaco e não substituem autorização. A aplicação mantém `Cache-Control: private, no-store`, `Referrer-Policy: no-referrer` e não registra parâmetros de Server Functions ou solicitações nos logs do servidor. Não há analytics nem envio de dados a terceiros neste fluxo.
 

@@ -408,6 +408,9 @@ select pg_temp.assert_true(api.get_patient('20000000-0000-4000-8000-000000000001
 select pg_temp.assert_true(api.get_patient('20000000-0000-4000-8000-000000000001',current_setting('test.patient_a')::uuid,false)->>'email'='ficticio@example.invalid','Email normalizado persistido');
 select pg_temp.assert_true(jsonb_array_length(api.search_patients('20000000-0000-4000-8000-000000000001','ficticio',0,false)->'records')=1,'Busca por nome ignora acentos');
 select pg_temp.assert_true(jsonb_array_length(api.search_patients('20000000-0000-4000-8000-000000000001','000.000.001-91',0,false)->'records')=1,'Busca por CPF com pontuação');
+select pg_temp.assert_true(api.search_patients('20000000-0000-4000-8000-000000000001','TÍC',0,false)->'records'->0->>'id'=current_setting('test.patient_a'),'Parte interna do nome ignora caixa e acentos encontra o paciente esperado');
+select pg_temp.assert_true(api.search_patients('20000000-0000-4000-8000-000000000001','00000000191',0,false)->'records'->0->>'id'=current_setting('test.patient_a'),'CPF completo sem pontuação encontra o paciente esperado');
+select pg_temp.assert_true(api.search_patients('20000000-0000-4000-8000-000000000001','000.000.001-91',0,false)->'records'->0->>'id'=current_setting('test.patient_a'),'CPF completo com pontuação encontra o paciente esperado');
 select pg_temp.assert_true(api.search_patients('20000000-0000-4000-8000-000000000001','ficticio',0,false)->'records'->0->>'cpf_suffix'='0191','Lista oferece somente sufixo do CPF');
 select pg_temp.assert_true(not (api.search_patients('20000000-0000-4000-8000-000000000001','ficticio',0,false)->'records'->0 ? 'cpf'),'Lista não devolve CPF completo');
 select pg_temp.assert_error($test$select api.search_patients('20000000-0000-4000-8000-000000000001','ab',0,false)$test$,'22023','Busca curta é recusada');

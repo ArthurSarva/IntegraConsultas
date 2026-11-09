@@ -12,3 +12,37 @@
 
 .danger-button{color:#a02a20;border-color:#dca9a2}.destructive-action{margin-top:12px}.destructive-confirm{display:flex;flex-direction:column;gap:12px}.destructive-confirm p{margin:0}.destructive-buttons{display:flex;gap:12px;flex-wrap:wrap}.removal-card{margin-top:24px}
 .agenda-filters{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin:24px 0}.agenda-filters label{display:flex;flex-direction:column;gap:8px;font-weight:600;font-size:14px;min-width:180px}.agenda-filters select,.agenda-filters input{min-height:46px;border:1px solid var(--line);border-radius:8px;background:var(--white);padding:10px;color:var(--ink)}.agenda-toolbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:24px 0}.agenda-section{margin-top:24px;margin-bottom:24px}.appointment-list{list-style:none;margin:16px 0;padding:0}.appointment-list>li{display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line);padding:20px 0}.appointment-list>li>div:first-child{display:flex;flex-direction:column;gap:8px;min-width:0;overflow-wrap:anywhere}.appointment-list span{font-size:14px}.appointment-status{align-self:flex-start;display:inline-block;background:#e8eeeb;border-radius:6px;padding:5px 10px;font-size:13px;font-weight:600}.appointment-status.confirmada,.appointment-status.concluida{background:#dcefe7}.appointment-status.cancelada,.appointment-status.falta{background:#fae8e3}.agenda-patient-picker{padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:28px}.agenda-actions{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}.agenda-actions .form{flex:1;min-width:180px}.agenda-history{padding-left:24px}.agenda-history li{padding:10px 0}.agenda-history li>span{display:block;margin-top:8px;font-size:14px;color:var(--muted)}details summary{font-weight:600;cursor:pointer;padding:8px 0}details[open] summary{margin-bottom:16px}@media(max-width:640px){.appointment-list>li{align-items:flex-start;flex-direction:column}.agenda-filters label{width:100%}.agenda-toolbar .link-button{width:100%;text-align:center}.agenda-actions{flex-direction:column;align-items:stretch}.agenda-actions .form{width:100%}}
+
+
+/* Navegação compartilhada da área autenticada */
+.workspace{min-height:100svh;padding-left:244px}
+.workspace-chrome{display:contents}
+.workspace-sidebar{position:fixed;inset:0 auto 0 0;width:244px;background:#fff;border-right:1px solid var(--line);padding:24px 14px;display:flex;flex-direction:column;gap:26px;z-index:20;overflow-y:auto}
+.sidebar-brand{padding:4px 10px 18px;border-bottom:1px solid var(--line)}
+.sidebar-brand .brand{font-size:19px}
+.sidebar-brand .brand-mark{width:29px;height:29px;font-size:24px}
+.sidebar-links,.sidebar-settings{display:flex;flex-direction:column;gap:4px}
+.sidebar-settings{margin-top:auto;border-top:1px solid var(--line);padding-top:18px}
+.sidebar-caption{padding:0 12px 10px;font-size:10px;letter-spacing:1.2px;color:var(--muted);font-weight:700}
+.sidebar-link{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:9px;text-decoration:none;color:var(--ink);font-size:14px;font-weight:600;min-height:44px}
+.sidebar-link:hover,.sidebar-link:focus-visible{background:#eaf4ee;color:var(--green)}
+.sidebar-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;font-size:18px;color:var(--green)}
+.workspace .workspace-topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px clamp(24px,4vw,56px);background:#fff;border-bottom:1px solid var(--line)}
+.topbar-identity{display:flex;flex-direction:column;gap:5px;min-width:0}
+.topbar-identity strong{overflow-wrap:anywhere;font-size:14px}
+.topbar-kicker{font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:700}
+.topbar-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.workspace .workspace-topbar .quiet{margin:0}
+.workspace main{max-width:1280px;padding:44px clamp(24px,4vw,56px)}
+@media(max-width:900px){
+ .workspace{padding-left:0;padding-bottom:64px}
+ .workspace-sidebar{inset:auto 0 0 0;width:auto;height:64px;padding:4px 8px;display:block;border-right:0;border-top:1px solid var(--line);overflow-x:auto;overflow-y:hidden}
+ .sidebar-brand,.sidebar-settings{display:none}
+ .sidebar-links{flex-direction:row;gap:4px;min-width:max-content;height:100%}
+ .sidebar-link{min-width:92px;min-height:54px;flex-direction:column;gap:2px;justify-content:center;padding:5px 8px;font-size:11px}
+ .sidebar-icon{font-size:17px;height:20px}
+ .workspace .workspace-topbar{padding:12px 18px;gap:12px}
+ .topbar-actions{gap:6px}
+ .topbar-actions .secondary,.topbar-actions .quiet{padding:9px;font-size:12px}
+ .workspace main{padding:28px 20px}
+}

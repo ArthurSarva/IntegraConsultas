@@ -46,3 +46,45 @@
  .topbar-actions .secondary,.topbar-actions .quiet{padding:9px;font-size:12px}
  .workspace main{padding:28px 20px}
 }
+
+
+/* Dashboard e componentes de operação */
+.dashboard-heading,.section-heading{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.dashboard-heading{margin-bottom:26px}
+.dashboard-heading h1{margin-bottom:8px}
+.dashboard-quick-actions,.view-switch{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dashboard-quick-actions .primary{margin-top:0}
+.dashboard-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:24px}
+.dashboard-metric{display:flex;flex-direction:column;gap:10px;background:white;border:1px solid var(--line);border-radius:14px;padding:24px}
+.dashboard-metric>span{font-size:14px;color:var(--muted)}
+.dashboard-metric>strong{font-size:34px;line-height:1.2}
+.dashboard-metric>small{font-size:12px;color:var(--muted)}
+.dashboard-appointments{margin-bottom:30px}
+.dashboard-appointments h2,.dashboard-shortcuts h2,.section-heading h2{margin:0}
+.dashboard-appointment-list{list-style:none;padding:0;margin:18px 0}
+.dashboard-appointment-list li{display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.dashboard-appointment-list li>div{display:grid;grid-template-columns:70px minmax(100px,1fr);gap:4px 12px;flex:1;min-width:0}
+.dashboard-appointment-list li>div strong{grid-row:span 2}
+.dashboard-appointment-list li>div small{color:var(--muted)}
+.dashboard-shortcuts{margin-top:26px}
+.dashboard-shortcut-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.dashboard-shortcut{display:flex;flex-direction:column;gap:9px;padding:22px;background:#fff;border:1px solid var(--line);border-radius:12px;text-decoration:none}
+.dashboard-shortcut:hover,.dashboard-shortcut:focus-visible{border-color:var(--green);background:#f5faf7}
+.dashboard-shortcut span{font-size:13px;color:var(--muted);line-height:1.5}
+.view-switch .link-button{padding:9px 13px;min-height:38px}
+.view-switch [aria-current="page"]{background:#eaf4ee;border-color:#8ebbaa;color:var(--green)}
+.agenda-timeline{margin-top:20px}
+.agenda-time-row{display:grid;grid-template-columns:68px minmax(0,1fr);border-top:1px solid var(--line);min-height:62px}
+.agenda-time-label{font-size:12px;font-weight:700;color:var(--muted);padding:14px 12px 0 0}
+.agenda-time-content{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.agenda-event{display:flex;flex-direction:column;gap:5px;padding:12px 14px;border-radius:8px;border-left:4px solid var(--green);background:#eaf4ee;text-decoration:none;font-size:13px}
+.agenda-event span,.agenda-event small{color:var(--muted)}
+.agenda-event-cancelada,.agenda-event-falta{background:#fff1ec;border-color:#c36b52}
+.agenda-event-agendada{background:#eef4fc;border-color:#5e8cb8}
+.agenda-block-event{padding:12px;border-radius:8px;background:#f1f2f2;border-left:4px solid #9ba8a3;font-size:13px}
+.agenda-empty-slot{color:#bdc8c3;padding:8px 0}
+.patient-search-form{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px 16px;margin-top:16px}
+.patient-search-form label,.patient-search-form .field-help{grid-column:1/-1}
+.patient-search-form .primary{margin:0}
+@media(max-width:900px){.dashboard-metrics,.dashboard-shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.dashboard-metrics,.dashboard-shortcut-grid{grid-template-columns:1fr}.dashboard-appointment-list li{align-items:flex-start;flex-wrap:wrap}.dashboard-appointment-list li>div{flex-basis:100%}.patient-search-form{grid-template-columns:1fr}.dashboard-quick-actions{width:100%}.dashboard-quick-actions .link-button{flex:1}.agenda-time-row{grid-template-columns:52px minmax(0,1fr)}}

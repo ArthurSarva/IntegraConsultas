@@ -5,10 +5,11 @@ import {agendaWorkspace,uuid,localDisplay,statuses,weekdays,type Appointment,typ
 import {clinicToday} from '@/lib/patients';
 import {WorkspaceHeader} from '@/components/workspace-header';
 import {AppointmentForm} from '@/components/appointment-form';
+import {AgendaTimeline} from '@/components/agenda-timeline';
 import {ActionForm} from '@/components/form';
 import {DestructiveForm} from '@/components/destructive-form';
 import {changeAvailability,changeAgendaBlock,changeAppointmentStatus,setMyDuration} from '@/app/agenda/actions';
-type Query={data?:string;medico?:string;pagina?:string;salvo?:string};
+type Query={data?:string;medico?:string;pagina?:string;salvo?:string;visualizacao?:string};
 function day(value:string|undefined,fallback:string){return value&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value?value:fallback;}
 function Hidden({clinic,ownOnly,doctor}:{clinic:string;ownOnly:boolean;doctor?:string}){return <><input type="hidden" name="clinic" value={clinic}/><input type="hidden" name="own" value={ownOnly?'on':''}/>{doctor&&<input type="hidden" name="doctor" value={doctor}/>}</>;}
 function IntegrationNotice({timezone}:{timezone:string}){return <p className="footnote">Horários no fuso {timezone}. Confira as pendências de sincronização do Google Agenda. WhatsApp ainda não envia mensagens.</p>;}
@@ -26,10 +27,11 @@ export async function AgendaIndex({ownOnly=false,query={}}:{ownOnly?:boolean;que
  const result=await client.rpc('list_agenda',{clinic_id:clinic.id,day:selectedDay,doctor_id:doctor,own_only:ownOnly,page_number:page});if(result.error)throw new Error('Unable to list agenda');
  const records=result.data.records as Appointment[],blocks=result.data.blocks as AgendaBlock[];
  const args='data='+selectedDay+(doctor?'&medico='+doctor:'');
+ const visual=query.visualizacao==='lista'?'lista':'visual';
  return <div className="workspace"><WorkspaceHeader clinic={clinic.name}/><main id="conteudo"><p className="eyebrow">{clinic.name}</p><h1>{ownOnly?'Minha agenda':'Agenda da clínica'}</h1><IntegrationNotice timezone={clinic.timezone}/>
  <form method="get" className="agenda-filters"><label>Data da agenda<input type="date" name="data" defaultValue={selectedDay} required/></label>{!ownOnly&&<label>Médico da agenda<select name="medico" defaultValue={doctor??''}><option value="">Todos os médicos</option>{doctors.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>}<button className="secondary">Ver agenda</button></form>
  <div className="agenda-toolbar">{permissions.can_write&&doctors.length>0&&<Link href={path+'/nova?'+args} className="primary link-button">Agendar consulta</Link>}<Link className="secondary link-button" href={path+'/horarios'+(doctor?'?medico='+doctor:'')}>Horários e bloqueios</Link><Link href={ownOnly?'/minhas-automacoes':'/automacoes'} className="secondary link-button">Pendências de automação</Link><Link href={ownOnly?'/meus-pacientes':'/pacientes'} className="text-link">Consultar pacientes</Link></div>
- <section className="module-card"><h2>Consultas do dia</h2><AppointmentList records={records} path={path}/><div className="pagination">{page>0?<Link className="secondary link-button" href={path+'?'+args+'&pagina='+(page-1)}>Anterior</Link>:<span/>}<span>Página {page+1}</span>{result.data.has_more&&<Link className="secondary link-button" href={path+'?'+args+'&pagina='+(page+1)}>Próxima</Link>}</div></section>
+ <section className="module-card"><div className="section-heading"><h2>Consultas do dia</h2><div className="view-switch"><Link aria-current={visual==='visual'?'page':undefined} className="secondary link-button" href={path+'?'+args+'&visualizacao=visual'}>Por horário</Link><Link aria-current={visual==='lista'?'page':undefined} className="secondary link-button" href={path+'?'+args+'&visualizacao=lista'}>Lista</Link></div></div>{visual==='visual'?<AgendaTimeline records={records} blocks={blocks} path={path}/>:<AppointmentList records={records} path={path}/>}<div className="pagination">{page>0?<Link className="secondary link-button" href={path+'?'+args+'&visualizacao='+visual+'&pagina='+(page-1)}>Anterior</Link>:<span/>}<span>Página {page+1}</span>{result.data.has_more&&<Link className="secondary link-button" href={path+'?'+args+'&visualizacao='+visual+'&pagina='+(page+1)}>Próxima</Link>}</div></section>
  {blocks.length>0&&<section className="module-card agenda-section"><h2>Horários bloqueados</h2><ul className="appointment-list">{blocks.map(b=><li key={b.id}><div><strong>{b.doctor_name}</strong><span>{localDisplay(b.start_local)} até {localDisplay(b.end_local)}</span></div>{permissions.can_write&&<DestructiveForm action={changeAgendaBlock} label="Retirar bloqueio" description={'Liberar este bloqueio de '+b.doctor_name+' na '+clinic.name+'?'} fields={{clinic:clinic.id,own:ownOnly?'on':'',doctor:b.doctor,block:b.id,version:String(b.version),operation:randomUUID()}}/>}</li>)}</ul></section>}
  <Link href="/inicio" className="text-link">Voltar ao início</Link></main></div>;
 }

@@ -9,7 +9,7 @@ export async function WorkspaceHeader({clinic}:{clinic:string}) {
  const admin=roles.includes('administrator');
  const doctor=roles.includes('doctor');
  const reception=roles.includes('reception');
- const canClinic=admin||reception||profile.is_dev;
+ const canClinic=admin||profile.is_dev||(reception&&!doctor);
  const ownOnly=doctor&&!admin&&!profile.is_dev;
  const items=[
   {href:'/inicio',label:'Visão geral',icon:'⌂'},

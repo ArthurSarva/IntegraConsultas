@@ -127,8 +127,8 @@ test('administrator enables own doctor profile, keeps administration and only sh
  expect((await client.rpc('patient_permissions',{clinic_id:f.clinics.a})).data.doctor_membership).toBeNull();
  await page.reload();await expect(own.getByLabel('Também sou médico')).not.toBeChecked();
  await page.getByRole('link',{name:'Voltar ao início'}).click();
- for(const name of ['Minha agenda','Meus pacientes'])await expect(page.getByRole('heading',{name,exact:true})).toHaveCount(0);
- for(const name of ['Agenda','Pacientes','Equipe'])await expect(page.getByRole('heading',{name,exact:true})).toBeVisible();
+ for(const name of ['Minha agenda','Meus pacientes'])await expect(moduleLink(page,name)).toHaveCount(0);
+ for(const name of ['Agenda','Pacientes','Equipe'])await expect(moduleLink(page,name)).toBeVisible();
  await page.goto('/meus-pacientes');await expect(page).toHaveURL(/\/inicio$/);
  await page.getByRole('link',{name:'Trocar clínica'}).click();await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.b);await page.getByRole('button',{name:'Acessar clínica'}).click();
  await expect(moduleLink(page,'Minha agenda')).toBeVisible();

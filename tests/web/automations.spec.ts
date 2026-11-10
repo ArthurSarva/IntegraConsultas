@@ -1,3 +1,4 @@
+import {moduleLink} from './navigation';
 import {test,expect,type Page} from '@playwright/test';
 import {createClient} from '@supabase/supabase-js';
 import {randomUUID} from 'node:crypto';
@@ -17,7 +18,7 @@ async function tasks(client:Awaited<ReturnType<typeof api>>,id:string,own=false)
 
 test('reception sees versioned tasks and integration pendencies without claiming a sent message',async({page})=>{
  const s=await setup();expect(await tasks(s.client,s.id)).toHaveLength(2);
- await login(page,f.users.receptionA.email);await page.getByRole('link',{name:'Acompanhar automações'}).click();await expect(page.getByRole('heading',{name:'Automações da clínica'})).toBeVisible();
+ await login(page,f.users.receptionA.email);await moduleLink(page,'Automações').click();await expect(page.getByRole('heading',{name:'Automações da clínica'})).toBeVisible();
  await page.goto('/automacoes?consulta='+s.id);await expect(page.locator('.automation-list>li')).toHaveCount(2);await expect(page.getByText('WhatsApp ainda não envia mensagens.',{exact:false})).toBeVisible();
  await page.goto('/agenda/'+s.id);await page.getByRole('button',{name:'Registrar confirmação'}).click();await expect(page.locator('.appointment-status')).toHaveText('Confirmada');
  const confirmed=await tasks(s.client,s.id);expect(confirmed.filter(t=>t.appointment_version===1).every(t=>t.status==='cancelled')).toBe(true);expect(confirmed.filter(t=>t.appointment_version===2)).toHaveLength(2);
@@ -36,7 +37,7 @@ test('concurrent technical workers reserve each due task once and user sessions 
 });
 
 test('doctor reads only own automation tasks and another clinic cannot discover appointment tasks',async({page})=>{
- const own=await setup(),other=await setup();await login(page,own.email);await page.getByRole('link',{name:'Acompanhar automações'}).click();await expect(page).toHaveURL(/\/minhas-automacoes$/);await expect(page.locator('.automation-list>li')).toHaveCount(2);
+ const own=await setup(),other=await setup();await login(page,own.email);await moduleLink(page,'Automações').click();await expect(page).toHaveURL(/\/minhas-automacoes$/);await expect(page.locator('.automation-list>li')).toHaveCount(2);
  await page.goto('/minhas-automacoes?consulta='+other.id);await expect(page.locator('.automation-list>li')).toHaveCount(0);
  const b=await api('receptionB',f.clinics.b);const foreign=await b.rpc('list_automations',{clinic_id:f.clinics.b,own_only:false,page_number:0,appointment_id:own.id});expect(foreign.error).toBeNull();expect(foreign.data.records).toHaveLength(0);
  expect((await b.rpc('list_automations',{clinic_id:f.clinics.a,own_only:false,page_number:0,appointment_id:own.id})).error?.code).toBe('42501');

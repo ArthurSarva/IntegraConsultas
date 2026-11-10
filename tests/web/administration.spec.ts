@@ -1,3 +1,4 @@
+import {moduleLink} from './navigation';
 import {test,expect,type Page,type BrowserContext} from '@playwright/test';
 import {createClient} from '@supabase/supabase-js';import {randomUUID} from 'node:crypto';
 import {fixture,localOnly} from './local';import {totp} from './totp';
@@ -61,7 +62,7 @@ test('Dev creates a clinic, provisions an administrator and accepts one-use invi
  await expect(invitedPage.getByRole('link',{name:'Cadastrar clínica',exact:true})).toHaveCount(0);
  await invitedPage.getByLabel('Clínica',{exact:true}).selectOption(clinicId);
  await invitedPage.getByRole('button',{name:'Acessar clínica'}).click();
- await expect(invitedPage.getByText('Administrador de clínica',{exact:true})).toBeVisible();
+ await expect(moduleLink(invitedPage,'Equipe')).toBeVisible();await expect(moduleLink(invitedPage,'Agenda')).toBeVisible();
  await invitedPage.goto('/dev/administradores');await expect(invitedPage).toHaveURL(/\/inicio$/);
  const replay=await browser.newContext();const replayPage=await replay.newPage();await replayPage.goto(invite);
  await replayPage.getByRole('button',{name:'Aceitar convite'}).click();

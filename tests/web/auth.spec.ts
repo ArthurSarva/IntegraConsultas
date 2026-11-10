@@ -1,3 +1,4 @@
+import {expectOwnModules,expectReceptionModules} from './navigation';
 import {test,expect,type Page} from '@playwright/test';
 import {createClient} from '@supabase/supabase-js';
 import {totp} from './totp';
@@ -29,15 +30,19 @@ test('reception can select only its clinic and logout clears access',async({page
  await expect(page.getByRole('option',{name:'Clínica de teste B',exact:true})).toHaveCount(0);
  await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);
  await page.getByRole('button',{name:'Acessar clínica'}).click();await expect(page).toHaveURL(/\/inicio$/);
- await expect(page.getByText('Recepção',{exact:true})).toBeVisible();
+ await expectReceptionModules(page);
  await page.getByRole('button',{name:'Sair',exact:true}).click();await expect(page).toHaveURL(/\/entrar$/);
  await page.goto('/inicio');await expect(page).toHaveURL(/\/entrar$/);
 });
 test('doctor with reception retains own scope',async({page})=>{
  await login(page,'doctor');await page.getByLabel('Clínica',{exact:true}).selectOption(f.clinics.a);
  await page.getByRole('button',{name:'Acessar clínica'}).click();
- await expect(page.getByText('Médico e recepção',{exact:true})).toBeVisible();
- await expect(page.getByText(/limitada à sua própria agenda/)).toBeVisible();
+ await expectOwnModules(page);
+ await page.goto('/agenda');await expect(page).toHaveURL(/\/minha-agenda$/);
+ await page.goto('/pacientes');await expect(page.getByRole('heading',{name:'Meus pacientes',exact:true})).toBeVisible();
+ await expect(page.getByText('Somente pacientes vinculados a você nesta clínica.',{exact:true})).toBeVisible();
+ await page.goto('/equipe');await expect(page).toHaveURL(/\/inicio$/);
+ 
 });
 for(const role of ['administrator','dev']){
  test(role+' requires MFA; enrolling and verifying reaches clinic selection',async({page})=>{

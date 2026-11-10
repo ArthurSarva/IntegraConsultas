@@ -1,3 +1,4 @@
+import {moduleLink} from './navigation';
 import {test,expect,type Page} from '@playwright/test';
 import {createClient} from '@supabase/supabase-js';
 import {randomUUID} from 'node:crypto';
@@ -22,7 +23,7 @@ async function fill(page:Page,name:string,phone:string,cpf=''){
 test('reception registers, searches and edits patients with validation, duplicate warnings and stale-edit protection',async({page,browser})=>{
  test.setTimeout(120000);
  const name='Paciente fictício '+randomUUID(),family='Familiar fictício '+randomUUID();
- await login(page,f.users.receptionA.email);await page.getByRole('link',{name:'Abrir pacientes',exact:true}).click();
+ await login(page,f.users.receptionA.email);await moduleLink(page,'Pacientes').click();
  await page.getByRole('link',{name:'Cadastrar paciente',exact:true}).click();
  await fill(page,name,'(11) 99999-0102','000.000.001-92');await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();
  await expect(page.getByRole('alert').filter({hasText:'CPF válido'})).toContainText('CPF válido');await expect(page.getByLabel('Nome completo')).toHaveValue(name);
@@ -82,14 +83,14 @@ test('doctor sees only linked patients; own reception creates self-linked patien
  insert into app.patient_doctors(clinic_id,patient_id,membership_id) values('${f.clinics.a}','${shared.data.id}','${membership}');
  insert into app.patient_doctors(clinic_id,patient_id,membership_id) select '${f.clinics.a}','${shared.data.id}',id from app.memberships where clinic_id='${f.clinics.a}' and user_id='${f.users.doctor.id}';
  end $doctor_fixture$;`);
- await login(page,f.users.doctor.email);await page.getByRole('link',{name:'Abrir meus pacientes',exact:true}).click();await expect(page.getByRole('link',{name:sharedName,exact:true})).toBeVisible();await expect(page.getByText(otherName,{exact:true})).toHaveCount(0);
+ await login(page,f.users.doctor.email);await moduleLink(page,'Meus pacientes').click();await expect(page.getByRole('link',{name:sharedName,exact:true})).toBeVisible();await expect(page.getByText(otherName,{exact:true})).toHaveCount(0);
  await page.getByRole('link',{name:sharedName,exact:true}).click();await expect(page.getByRole('button',{name:'Salvar alterações'})).toHaveCount(0);await expect(page.getByText(/Cadastro compartilhado/)).toBeVisible();
  expect((await doctor.rpc('save_patient',{...payload('Negado'),patient_id:shared.data.id,expected_version:1})).error?.code).toBe('42501');
  expect((await doctor.rpc('get_patient',{clinic_id:f.clinics.a,patient_id:other.data.id,own_only:false})).data).toBeNull();
  await page.getByRole('link',{name:'Voltar aos pacientes'}).click();await page.getByRole('link',{name:'Cadastrar paciente',exact:true}).click();const ownName='Próprio fictício '+randomUUID();
  await fill(page,ownName,'11999990107');await page.getByRole('button',{name:'Cadastrar paciente',exact:true}).click();await expect(page).toHaveURL(/\/meus-pacientes\/[0-9a-f-]{36}\?salvo=1$/);
  await expect(page.getByLabel('Nome completo')).toHaveValue(ownName);await page.getByLabel('Email (opcional)').fill('own@example.invalid');await page.getByRole('button',{name:'Salvar alterações'}).click();await expect(page.getByRole('status')).toContainText('Cadastro salvo');
- const readContext=await browser.newContext(),readPage=await readContext.newPage();await login(readPage,email);await readPage.getByRole('link',{name:'Abrir meus pacientes',exact:true}).click();
+ const readContext=await browser.newContext(),readPage=await readContext.newPage();await login(readPage,email);await moduleLink(readPage,'Meus pacientes').click();
  await expect(readPage.getByRole('link',{name:'Cadastrar paciente',exact:true})).toHaveCount(0);await expect(readPage.getByText(ownName,{exact:true})).toHaveCount(0);
  await readPage.getByRole('link',{name:sharedName,exact:true}).click();await expect(readPage.getByRole('heading',{name:'Paciente',exact:true})).toBeVisible();await expect(readPage.getByRole('button',{name:'Salvar alterações'})).toHaveCount(0);
  await readPage.goto('/meus-pacientes/novo');await expect(readPage).toHaveURL(/\/meus-pacientes$/);await readContext.close();

@@ -1,3 +1,4 @@
+import {moduleLink} from './navigation';
 import {test,expect,type Page} from '@playwright/test';
 import {createClient} from '@supabase/supabase-js';
 import {randomUUID} from 'node:crypto';
@@ -25,7 +26,7 @@ async function confirm(page:Page,label:string){await page.getByRole('button',{na
 
 test('reception configures hours, schedules, confirms, reschedules, replaces, blocks and cancels with history preserved',async({page})=>{
  test.setTimeout(120000);const d=await doctor(true,false,false),client=await api('receptionA'),p=await patient(client,f.clinics.a,'0901'),p2=await patient(client,f.clinics.a,'0902');
- await login(page,f.users.receptionA.email);await page.getByRole('link',{name:'Abrir agenda da clínica',exact:true}).click();await expect(page.getByRole('heading',{name:'Agenda da clínica',exact:true})).toBeVisible();
+ await login(page,f.users.receptionA.email);await moduleLink(page,'Agenda').click();await expect(page.getByRole('heading',{name:'Agenda da clínica',exact:true})).toBeVisible();
  await page.goto('/agenda/horarios?medico='+d.a);await page.getByLabel('Dia da semana').selectOption(String(weekday));await page.getByLabel('Início do atendimento').fill('08:00');await page.getByLabel('Fim do atendimento').fill('18:00');await page.getByRole('button',{name:'Adicionar horário de atendimento'}).click();await expect(page.getByRole('status')).toContainText('Horário de atendimento salvo');
  await page.goto('/agenda/nova?data='+day+'&medico='+d.a);await pickPatient(page,p);await expect(page.getByLabel('Duração da consulta')).toBeDisabled();await page.getByLabel('Data e horário da consulta').fill(day+'T09:00');await page.getByRole('button',{name:'Agendar consulta',exact:true}).click();await expect(page).toHaveURL(/\/agenda\/[0-9a-f-]{36}\?salvo=1$/);const first=new URL(page.url()).pathname.split('/').at(-1)!;
  await expect(page.locator('.appointment-status')).toHaveText('Agendada');await expect(page.getByRole('button',{name:'Registrar falta'})).toBeDisabled();await page.getByRole('button',{name:'Registrar confirmação'}).click();await expect(page.locator('.appointment-status')).toHaveText('Confirmada');
@@ -55,7 +56,7 @@ test('simultaneous bookings and replacements across clinics preserve one global 
 test('doctor-only access stays read-only while own reception can choose duration only for the own agenda',async({page})=>{
  test.setTimeout(120000);const readonly=await doctor(false),own=await doctor(true),reception=await api('receptionA'),person=await patient(reception,f.clinics.a,'0905');
  const saved=await reception.rpc('save_appointment',request(f.clinics.a,readonly.a,person.id));expect(saved.error).toBeNull();
- await login(page,readonly.email);await page.getByRole('link',{name:'Abrir minha agenda'}).click();await expect(page.getByRole('link',{name:'Agendar consulta',exact:true})).toHaveCount(0);await page.goto('/minha-agenda/'+saved.data.id);await expect(page.getByRole('heading',{name:'Atualizar situação'})).toHaveCount(0);
+ await login(page,readonly.email);await moduleLink(page,'Minha agenda').click();await expect(page.getByRole('link',{name:'Agendar consulta',exact:true})).toHaveCount(0);await page.goto('/minha-agenda/'+saved.data.id);await expect(page.getByRole('heading',{name:'Atualizar situação'})).toHaveCount(0);
  await page.goto('/minha-agenda/horarios');await expect(page.getByRole('button',{name:'Adicionar horário de atendimento'})).toHaveCount(0);await page.getByLabel('Duração padrão das novas consultas').selectOption('45');await page.getByRole('button',{name:'Salvar duração padrão'}).click();await expect(page.getByRole('status')).toContainText('Duração padrão salva');
  expect((await reception.rpc('get_appointment',{clinic_id:f.clinics.a,appointment_id:saved.data.id,own_only:false})).data.duration).toBe(30);
  const ownClient=createClient(f.url,f.key,{db:{schema:'api'},auth:{persistSession:false,autoRefreshToken:false}});expect((await ownClient.auth.signInWithPassword({email:own.email,password:f.password})).error).toBeNull();expect((await ownClient.rpc('select_clinic',{clinic_id:f.clinics.a})).error).toBeNull();
